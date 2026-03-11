@@ -1,0 +1,44 @@
+security:
+  providers:
+    jwt:
+      lexik_jwt:
+        class: App\Security\JwtUser
+
+  firewalls:
+    dev:
+      pattern: ^/(_(profiler|wdt)|css|images|js)/
+      security: false
+
+    health:
+      pattern: ^/api/health$
+      security: false
+
+    api:
+      pattern: ^/api/
+      stateless: true
+      provider: jwt
+      jwt: ~
+
+  access_control:
+    - { path: ^/api/health, roles: PUBLIC_ACCESS }
+    - {
+        path: ^/api/todos,
+        methods: [GET],
+        allow_if: "user and 'todos.view' in user.getPermissions()",
+      }
+    - {
+        path: ^/api/todos,
+        methods: [POST, PATCH, PUT, DELETE],
+        allow_if: "user and 'todos.manage' in user.getPermissions()",
+      }
+    - {
+        path: ^/api/shopping-lists,
+        methods: [GET],
+        allow_if: "user and 'shopping.view' in user.getPermissions()",
+      }
+    - {
+        path: ^/api/shopping-lists,
+        methods: [POST, PATCH, PUT, DELETE],
+        allow_if: "user and 'shopping.manage' in user.getPermissions()",
+      }
+    - { path: ^/api/, roles: ROLE_USER }
