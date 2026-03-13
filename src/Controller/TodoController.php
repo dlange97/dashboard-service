@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/api/todos', name: 'api_todos_')]
+#[Route('/dashboard/todos', name: 'dashboard_todos_')]
 class TodoController extends AbstractController
 {
     public function __construct(private readonly TodoService $todoService) {}

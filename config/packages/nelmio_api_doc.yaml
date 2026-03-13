@@ -1,0 +1,20 @@
+nelmio_api_doc:
+  documentation:
+    info:
+      title: Dashboard Service API
+      description: Todos, shopping lists, and dashboard health endpoints.
+      version: 1.0.0
+    components:
+      securitySchemes:
+        bearerAuth:
+          type: http
+          scheme: bearer
+          bearerFormat: JWT
+    security:
+      - bearerAuth: []
+  areas:
+    default:
+      path_patterns:
+        - ^/dashboard/todos
+        - ^/dashboard/shopping-lists
+        - ^/dashboard/health$

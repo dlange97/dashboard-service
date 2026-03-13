@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 
-#[Route('/api/shopping-lists', name: 'api_shopping_lists_')]
+#[Route('/dashboard/shopping-lists', name: 'dashboard_shopping_lists_')]
 class ShoppingListController extends AbstractController
 {
     public function __construct(

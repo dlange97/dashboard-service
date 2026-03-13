@@ -10,35 +10,36 @@ security:
       security: false
 
     health:
-      pattern: ^/api/health$
+      pattern: ^/dashboard/health$
       security: false
 
     api:
-      pattern: ^/api/
+      pattern: ^/dashboard/
       stateless: true
       provider: jwt
       jwt: ~
 
   access_control:
-    - { path: ^/api/health, roles: PUBLIC_ACCESS }
+    - { path: ^/dashboard/health, roles: PUBLIC_ACCESS }
+    - { path: ^/dashboard/docs(?:\.json)?$, roles: PUBLIC_ACCESS }
     - {
-        path: ^/api/todos,
+        path: ^/dashboard/todos,
         methods: [GET],
         allow_if: "user and 'todos.view' in user.getPermissions()",
       }
     - {
-        path: ^/api/todos,
+        path: ^/dashboard/todos,
         methods: [POST, PATCH, PUT, DELETE],
         allow_if: "user and 'todos.manage' in user.getPermissions()",
       }
     - {
-        path: ^/api/shopping-lists,
+        path: ^/dashboard/shopping-lists,
         methods: [GET],
         allow_if: "user and 'shopping.view' in user.getPermissions()",
       }
     - {
-        path: ^/api/shopping-lists,
+        path: ^/dashboard/shopping-lists,
         methods: [POST, PATCH, PUT, DELETE],
         allow_if: "user and 'shopping.manage' in user.getPermissions()",
       }
-    - { path: ^/api/, roles: ROLE_USER }
+    - { path: ^/dashboard/, roles: ROLE_USER }
