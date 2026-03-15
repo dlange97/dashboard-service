@@ -17,11 +17,11 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class ShoppingListServiceTest extends TestCase
 {
-    private ShoppingListRepository&MockObject        $listRepository;
+    private ShoppingListRepository&MockObject $listRepository;
     private ShoppingListProductRepository&MockObject $productRepository;
-    private EntityManagerInterface&MockObject        $em;
-    private ValidatorInterface&MockObject            $validator;
-    private ShoppingListService                      $service;
+    private EntityManagerInterface&MockObject $em;
+    private ValidatorInterface&MockObject $validator;
+    private ShoppingListService $service;
 
     protected function setUp(): void
     {

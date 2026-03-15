@@ -48,7 +48,8 @@ class LoadFixturesCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io     = new SymfonyStyle($input, $output);
-        $userId = (int) $input->getOption('user-id');
+        $userId = (string) $input->getOption('user-id');
+        $actorId = is_numeric($userId) ? (int) $userId : 1;
 
         if ($input->getOption('clear')) {
             $this->clearData();
@@ -92,8 +93,8 @@ class LoadFixturesCommand extends Command
             $list = new ShoppingList();
             $list->setName($listDef['name']);
             $list->setOwnerId($userId);
-            $list->setCreatedBy($userId);
-            $list->setUpdatedBy($userId);
+            $list->setCreatedBy($actorId);
+            $list->setUpdatedBy($actorId);
 
             foreach ($listDef['products'] as $i => $pDef) {
                 $product = new ShoppingListProduct();
@@ -101,8 +102,8 @@ class LoadFixturesCommand extends Command
                 $product->setQty($pDef['qty']);
                 $product->setWeight($pDef['weight']);
                 $product->setPosition($i);
-                $product->setCreatedBy($userId);
-                $product->setUpdatedBy($userId);
+                $product->setCreatedBy($actorId);
+                $product->setUpdatedBy($actorId);
                 $list->addProduct($product);
             }
 
@@ -125,15 +126,15 @@ class LoadFixturesCommand extends Command
             $item->setText($todoDef['text']);
             $item->setDone($todoDef['done']);
             $item->setOwnerId($userId);
-            $item->setCreatedBy($userId);
-            $item->setUpdatedBy($userId);
+            $item->setCreatedBy($actorId);
+            $item->setUpdatedBy($actorId);
             $this->em->persist($item);
         }
 
         $this->em->flush();
 
         $io->success(sprintf(
-            'Loaded %d shopping list(s) and %d todo item(s) for user ID %d.',
+            'Loaded %d shopping list(s) and %d todo item(s) for user ID %s.',
             count($listsData),
             count($todos),
             $userId,

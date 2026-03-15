@@ -15,11 +15,12 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 final class ShoppingListService
 {
     public function __construct(
-        private readonly ShoppingListRepository        $listRepository,
+        private readonly ShoppingListRepository $listRepository,
         private readonly ShoppingListProductRepository $productRepository,
-        private readonly EntityManagerInterface        $em,
-        private readonly ValidatorInterface            $validator,
-    ) {}
+        private readonly EntityManagerInterface $em,
+        private readonly ValidatorInterface $validator,
+    ) {
+    }
 
     /** @return ShoppingList[] */
     public function findAllByOwner(string $ownerId): array
@@ -28,14 +29,14 @@ final class ShoppingListService
     }
 
     /**
-     * @param array{name: string, products?: array<array-key, array{name: string, qty?: int, weight?: string|null}>} $data
+     * @param array{name: string, status?: string, products?: array<array-key, array{name: string, qty?: int, weight?: string|null, bought?: bool}>} $data
      * @throws ValidationFailedException
      */
     public function create(array $data, string $ownerId): ShoppingList
     {
         $list = new ShoppingList();
-        $list->setName($data['name'] ?? '');
-        if (isset($data['status'])) {
+        $list->setName($data['name']);
+        if (array_key_exists('status', $data)) {
             $list->setStatus((string) $data['status']);
         }
         $list->setOwnerId($ownerId);
@@ -52,7 +53,7 @@ final class ShoppingListService
     }
 
     /**
-     * @param array{name?: string, products?: array<array-key, mixed>} $data
+     * @param array{name?: string, status?: string, products?: array<array-key, array{name?: string, qty?: int, weight?: string|null, bought?: bool}>} $data
      * @throws ValidationFailedException
      */
     public function update(ShoppingList $list, array $data, string $ownerId): ShoppingList
@@ -65,7 +66,7 @@ final class ShoppingListService
             $list->setStatus((string) $data['status']);
         }
 
-        if (array_key_exists('products', $data)) {
+        if (array_key_exists('products', $data) && is_array($data['products'])) {
             foreach ($list->getProducts()->toArray() as $product) {
                 $list->removeProduct($product);
                 $this->em->remove($product);
@@ -150,7 +151,7 @@ final class ShoppingListService
     }
 
     /**
-     * @param array{name?: string, qty?: int, weight?: string|null} $data
+     * @param array{name?: string, qty?: int, weight?: string|null, bought?: bool} $data
      */
     private function buildProduct(array $data, int $position, string $ownerId): ShoppingListProduct
     {

@@ -21,10 +21,11 @@ use Symfony\Component\Validator\Exception\ValidationFailedException;
 class ShoppingListController extends AbstractController
 {
     public function __construct(
-        private readonly ShoppingListService           $shoppingListService,
-        private readonly ShoppingListRepository        $listRepository,
+        private readonly ShoppingListService $shoppingListService,
+        private readonly ShoppingListRepository $listRepository,
         private readonly ShoppingListProductRepository $productRepository,
-    ) {}
+    ) {
+    }
 
     #[Route('', name: 'index', methods: ['GET'])]
     public function index(): JsonResponse

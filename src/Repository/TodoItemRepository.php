@@ -34,4 +34,3 @@ class TodoItemRepository extends ServiceEntityRepository
             ->getResult();
     }
 }
-

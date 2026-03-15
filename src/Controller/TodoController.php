@@ -16,7 +16,9 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/dashboard/todos', name: 'dashboard_todos_')]
 class TodoController extends AbstractController
 {
-    public function __construct(private readonly TodoService $todoService) {}
+    public function __construct(private readonly TodoService $todoService)
+    {
+    }
 
     #[Route('', name: 'index', methods: ['GET'])]
     public function index(): JsonResponse
