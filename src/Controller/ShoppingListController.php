@@ -8,7 +8,7 @@ use App\Entity\ShoppingList;
 use App\Entity\ShoppingListProduct;
 use App\Repository\ShoppingListProductRepository;
 use App\Repository\ShoppingListRepository;
-use App\Security\JwtUser;
+use MyDashboard\Shared\Security\JwtUser;
 use App\Service\ShoppingListService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -17,14 +17,15 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 
-#[Route('/api/shopping-lists', name: 'api_shopping_lists_')]
+#[Route('/dashboard/shopping-lists', name: 'dashboard_shopping_lists_')]
 class ShoppingListController extends AbstractController
 {
     public function __construct(
-        private readonly ShoppingListService           $shoppingListService,
-        private readonly ShoppingListRepository        $listRepository,
+        private readonly ShoppingListService $shoppingListService,
+        private readonly ShoppingListRepository $listRepository,
         private readonly ShoppingListProductRepository $productRepository,
-    ) {}
+    ) {
+    }
 
     #[Route('', name: 'index', methods: ['GET'])]
     public function index(): JsonResponse

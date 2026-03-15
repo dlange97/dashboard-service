@@ -94,7 +94,7 @@ final class TodoServiceTest extends TestCase
     {
         $item = $this->makeTodoItem('Task', false, 'owner-1');
 
-        $this->em->expects($this->once())->method('flush');
+        $this->em->expects($this->exactly(2))->method('flush');
 
         $result = $this->service->toggle($item, 'owner-1');
 

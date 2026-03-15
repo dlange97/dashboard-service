@@ -1,0 +1,9 @@
+dashboard_api_doc_json:
+  path: /dashboard/docs.json
+  methods: [GET]
+  defaults: { _controller: nelmio_api_doc.controller.swagger, area: default }
+
+dashboard_api_doc_ui:
+  path: /dashboard/docs
+  methods: [GET]
+  defaults: { _controller: nelmio_api_doc.controller.swagger_ui, area: default }

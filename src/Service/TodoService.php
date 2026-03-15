@@ -13,10 +13,11 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 final class TodoService
 {
     public function __construct(
-        private readonly TodoItemRepository   $repository,
+        private readonly TodoItemRepository $repository,
         private readonly EntityManagerInterface $em,
-        private readonly ValidatorInterface    $validator,
-    ) {}
+        private readonly ValidatorInterface $validator,
+    ) {
+    }
 
     /** @return TodoItem[] */
     public function findAllByOwner(string $ownerId): array
@@ -31,7 +32,7 @@ final class TodoService
     public function create(array $data, string $ownerId): TodoItem
     {
         $item = new TodoItem();
-        $item->setText(trim($data['text'] ?? ''));
+        $item->setText(trim($data['text']));
         $item->setDone(false);
         $item->setOwnerId($ownerId);
 

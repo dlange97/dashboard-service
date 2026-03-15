@@ -24,4 +24,9 @@ docker compose -f ../../my-dashboard-docker/docker-compose.yml exec -T dashboard
 
 # Tests
 docker compose -f ../../my-dashboard-docker/docker-compose.yml exec -T dashboard-php php bin/phpunit
+
+# Quality checks + coverage gate
+docker compose -f ../../my-dashboard-docker/docker-compose.yml exec -T dashboard-php composer run quality
 ```
+
+Run quality checks after every code change in this service.
