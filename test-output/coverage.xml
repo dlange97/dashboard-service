@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1773570937">
-  <project timestamp="1773570937" name="Clover Coverage">
+<coverage generated="1773573705">
+  <project timestamp="1773573705" name="Clover Coverage">
     <package name="App\Command">
       <file name="/app/src/Command/LoadFixturesCommand.php">
         <class name="App\Command\LoadFixturesCommand" namespace="App\Command">
