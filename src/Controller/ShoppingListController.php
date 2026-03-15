@@ -8,7 +8,7 @@ use App\Entity\ShoppingList;
 use App\Entity\ShoppingListProduct;
 use App\Repository\ShoppingListProductRepository;
 use App\Repository\ShoppingListRepository;
-use App\Security\JwtUser;
+use MyDashboard\Shared\Security\JwtUser;
 use App\Service\ShoppingListService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
