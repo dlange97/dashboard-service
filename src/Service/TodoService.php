@@ -120,11 +120,16 @@ final class TodoService
     private function resolveActorId(string $ownerId): int
     {
         if (is_numeric($ownerId)) {
-            return (int) $ownerId;
+            $numericId = (int) $ownerId;
+            if ($numericId > 0 && $numericId <= 2147483647) {
+                return $numericId;
+            }
         }
 
         $hash = crc32($ownerId);
-        return (int) sprintf('%u', $hash);
+        $unsignedHash = (int) sprintf('%u', $hash);
+
+        return ($unsignedHash % 2147483646) + 1;
     }
 
     /** @throws ValidationFailedException */
