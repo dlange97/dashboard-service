@@ -34,7 +34,11 @@ final class TodoService
         $item = new TodoItem();
         $item->setText(trim($data['text']));
         $item->setDone(false);
+        $item->setDueDate($this->parseDueDate($data['dueDate'] ?? null));
         $item->setOwnerId($ownerId);
+        $actorId = $this->resolveActorId($ownerId);
+        $item->setCreatedBy($actorId);
+        $item->setUpdatedBy($actorId);
 
         $this->validate($item);
         $this->repository->save($item, true);
@@ -54,6 +58,10 @@ final class TodoService
         if (isset($data['done'])) {
             $item->setDone((bool) $data['done']);
         }
+        if (array_key_exists('dueDate', $data)) {
+            $item->setDueDate($this->parseDueDate($data['dueDate']));
+        }
+        $item->setUpdatedBy($this->resolveActorId($ownerId));
 
         $this->validate($item);
         $this->em->flush();
@@ -64,6 +72,7 @@ final class TodoService
     public function toggle(TodoItem $item, string $ownerId): TodoItem
     {
         $item->setDone(!$item->isDone());
+        $item->setUpdatedBy($this->resolveActorId($ownerId));
         $this->em->flush();
 
         return $item;
@@ -81,9 +90,41 @@ final class TodoService
             'id'        => $item->getId(),
             'text'      => $item->getText(),
             'done'      => $item->isDone(),
+            'dueDate'   => $item->getDueDate()?->format('Y-m-d'),
+            'ownerId'   => $item->getOwnerId(),
+            'createdBy' => $item->getCreatedBy(),
             'createdAt' => $item->getCreatedAt()?->format('c'),
             'updatedAt' => $item->getUpdatedAt()?->format('c'),
         ];
+    }
+
+    private function parseDueDate(mixed $value): ?\DateTimeImmutable
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $normalized = trim((string) $value);
+        if ($normalized == '') {
+            return null;
+        }
+
+        $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d', $normalized);
+        if ($parsed !== false) {
+            return $parsed;
+        }
+
+        return new \DateTimeImmutable($normalized);
+    }
+
+    private function resolveActorId(string $ownerId): int
+    {
+        if (is_numeric($ownerId)) {
+            return (int) $ownerId;
+        }
+
+        $hash = crc32($ownerId);
+        return (int) sprintf('%u', $hash);
     }
 
     /** @throws ValidationFailedException */

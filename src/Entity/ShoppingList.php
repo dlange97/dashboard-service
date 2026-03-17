@@ -34,6 +34,9 @@ class ShoppingList
     #[Assert\Choice(choices: [self::STATUS_ACTIVE, self::STATUS_ARCHIVED])]
     private string $status = self::STATUS_ACTIVE;
 
+    #[ORM\Column(type: 'date_immutable', nullable: true)]
+    private ?\DateTimeImmutable $dueDate = null;
+
     /** Owner UUID from auth-service (no FK – cross-service boundary). */
     #[ORM\Column(type: 'string', length: 36, nullable: true)]
     private ?string $ownerId = null;
@@ -74,6 +77,17 @@ class ShoppingList
     public function setStatus(string $status): static
     {
         $this->status = $status;
+        return $this;
+    }
+
+    public function getDueDate(): ?\DateTimeImmutable
+    {
+        return $this->dueDate;
+    }
+
+    public function setDueDate(?\DateTimeImmutable $dueDate): static
+    {
+        $this->dueDate = $dueDate;
         return $this;
     }
 

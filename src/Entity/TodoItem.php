@@ -28,6 +28,9 @@ class TodoItem
     #[ORM\Column(type: 'boolean')]
     private bool $done = false;
 
+    #[ORM\Column(type: 'date_immutable', nullable: true)]
+    private ?\DateTimeImmutable $dueDate = null;
+
     /** Owner UUID from auth-service (no FK – cross-service boundary). */
     #[ORM\Column(type: 'string', length: 36, nullable: true)]
     private ?string $ownerId = null;
@@ -58,6 +61,17 @@ class TodoItem
     public function setDone(bool $done): static
     {
         $this->done = $done;
+        return $this;
+    }
+
+    public function getDueDate(): ?\DateTimeImmutable
+    {
+        return $this->dueDate;
+    }
+
+    public function setDueDate(?\DateTimeImmutable $dueDate): static
+    {
+        $this->dueDate = $dueDate;
         return $this;
     }
 
