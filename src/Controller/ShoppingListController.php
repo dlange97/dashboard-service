@@ -92,7 +92,7 @@ class ShoppingListController extends AbstractController
         }
 
         try {
-            $updated = $this->shoppingListService->updateStatus($list, (string) $data['status']);
+            $updated = $this->shoppingListService->updateStatus($list, (string) $data['status'], $this->getOwnerId());
         } catch (ValidationFailedException $e) {
             return $this->json(['errors' => $this->formatValidationErrors($e)], Response::HTTP_UNPROCESSABLE_ENTITY);
         }

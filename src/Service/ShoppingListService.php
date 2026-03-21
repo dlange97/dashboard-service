@@ -29,17 +29,21 @@ final class ShoppingListService
     }
 
     /**
-     * @param array{name: string, status?: string, products?: array<array-key, array{name: string, qty?: int, weight?: string|null, bought?: bool}>} $data
+     * @param array{name: string, dueDate?: string|null, status?: string, products?: array<array-key, array{name: string, qty?: int, weight?: string|null, bought?: bool}>} $data
      * @throws ValidationFailedException
      */
     public function create(array $data, string $ownerId): ShoppingList
     {
         $list = new ShoppingList();
         $list->setName($data['name']);
+        $list->setDueDate($this->parseDueDate($data['dueDate'] ?? null));
         if (array_key_exists('status', $data)) {
             $list->setStatus((string) $data['status']);
         }
         $list->setOwnerId($ownerId);
+        $actorId = $this->resolveActorId($ownerId);
+        $list->setCreatedBy($actorId);
+        $list->setUpdatedBy($actorId);
 
         $this->validate($list);
 
@@ -53,7 +57,7 @@ final class ShoppingListService
     }
 
     /**
-     * @param array{name?: string, status?: string, products?: array<array-key, array{name?: string, qty?: int, weight?: string|null, bought?: bool}>} $data
+     * @param array{name?: string, dueDate?: string|null, status?: string, products?: array<array-key, array{name?: string, qty?: int, weight?: string|null, bought?: bool}>} $data
      * @throws ValidationFailedException
      */
     public function update(ShoppingList $list, array $data, string $ownerId): ShoppingList
@@ -62,9 +66,15 @@ final class ShoppingListService
             $list->setName($data['name']);
         }
 
+        if (array_key_exists('dueDate', $data)) {
+            $list->setDueDate($this->parseDueDate($data['dueDate']));
+        }
+
         if (isset($data['status'])) {
             $list->setStatus((string) $data['status']);
         }
+
+        $list->setUpdatedBy($this->resolveActorId($ownerId));
 
         if (array_key_exists('products', $data) && is_array($data['products'])) {
             foreach ($list->getProducts()->toArray() as $product) {
@@ -91,9 +101,10 @@ final class ShoppingListService
     /**
      * @throws ValidationFailedException
      */
-    public function updateStatus(ShoppingList $list, string $status): ShoppingList
+    public function updateStatus(ShoppingList $list, string $status, string $ownerId): ShoppingList
     {
         $list->setStatus($status);
+        $list->setUpdatedBy($this->resolveActorId($ownerId));
         $this->validate($list);
         $this->em->flush();
 
@@ -131,6 +142,9 @@ final class ShoppingListService
             'id'        => $list->getId(),
             'name'      => $list->getName(),
             'status'    => $list->getStatus(),
+            'dueDate'   => $list->getDueDate()?->format('Y-m-d'),
+            'ownerId'   => $list->getOwnerId(),
+            'createdBy' => $list->getCreatedBy(),
             'products'  => array_map($this->serializeProduct(...), $list->getProducts()->toArray()),
             'createdAt' => $list->getCreatedAt()?->format('c'),
             'updatedAt' => $list->getUpdatedAt()?->format('c'),
@@ -147,6 +161,7 @@ final class ShoppingListService
             'weight'   => $product->getWeight(),
             'bought'   => $product->isBought(),
             'position' => $product->getPosition(),
+            'createdBy' => $product->getCreatedBy(),
         ];
     }
 
@@ -161,8 +176,45 @@ final class ShoppingListService
         $product->setWeight($data['weight'] ?? null);
         $product->setBought((bool) ($data['bought'] ?? false));
         $product->setPosition($position);
+        $actorId = $this->resolveActorId($ownerId);
+        $product->setCreatedBy($actorId);
+        $product->setUpdatedBy($actorId);
 
         return $product;
+    }
+
+    private function parseDueDate(mixed $value): ?\DateTimeImmutable
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $normalized = trim((string) $value);
+        if ($normalized == '') {
+            return null;
+        }
+
+        $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d', $normalized);
+        if ($parsed !== false) {
+            return $parsed;
+        }
+
+        return new \DateTimeImmutable($normalized);
+    }
+
+    private function resolveActorId(string $ownerId): int
+    {
+        if (is_numeric($ownerId)) {
+            $numericId = (int) $ownerId;
+            if ($numericId > 0 && $numericId <= 2147483647) {
+                return $numericId;
+            }
+        }
+
+        $hash = crc32($ownerId);
+        $unsignedHash = (int) sprintf('%u', $hash);
+
+        return ($unsignedHash % 2147483646) + 1;
     }
 
     /** @throws ValidationFailedException */
