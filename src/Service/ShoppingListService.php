@@ -29,7 +29,7 @@ final class ShoppingListService
     }
 
     /**
-     * @param array{name: string, status?: string, products?: array<array-key, array{name: string, qty?: int, weight?: string|null, bought?: bool}>} $data
+     * @param array{name: string, dueDate?: string|null, status?: string, products?: array<array-key, array{name: string, qty?: int, weight?: string|null, bought?: bool}>} $data
      * @throws ValidationFailedException
      */
     public function create(array $data, string $ownerId): ShoppingList
@@ -57,7 +57,7 @@ final class ShoppingListService
     }
 
     /**
-     * @param array{name?: string, status?: string, products?: array<array-key, array{name?: string, qty?: int, weight?: string|null, bought?: bool}>} $data
+     * @param array{name?: string, dueDate?: string|null, status?: string, products?: array<array-key, array{name?: string, qty?: int, weight?: string|null, bought?: bool}>} $data
      * @throws ValidationFailedException
      */
     public function update(ShoppingList $list, array $data, string $ownerId): ShoppingList

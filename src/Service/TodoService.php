@@ -26,7 +26,7 @@ final class TodoService
     }
 
     /**
-     * @param array{text: string} $data
+     * @param array{text: string, dueDate?: string|null} $data
      * @throws ValidationFailedException
      */
     public function create(array $data, string $ownerId): TodoItem
@@ -47,7 +47,7 @@ final class TodoService
     }
 
     /**
-     * @param array{text?: string, done?: bool} $data
+     * @param array{text?: string, done?: bool, dueDate?: string|null} $data
      * @throws ValidationFailedException
      */
     public function update(TodoItem $item, array $data, string $ownerId): TodoItem
