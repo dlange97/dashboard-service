@@ -52,7 +52,7 @@ class ShoppingListController extends AbstractController
     #[Route('/{id}', name: 'show', methods: ['GET'])]
     public function show(ShoppingList $list): JsonResponse
     {
-        $this->assertOwner($list);
+        $this->assertAccessible($list);
 
         return $this->json($this->shoppingListService->serializeList($list));
     }
@@ -60,7 +60,7 @@ class ShoppingListController extends AbstractController
     #[Route('/{id}', name: 'update', methods: ['PUT', 'PATCH'])]
     public function update(Request $request, ShoppingList $list): JsonResponse
     {
-        $this->assertOwner($list);
+        $this->assertAccessible($list);
         $data = json_decode($request->getContent(), true) ?? [];
 
         try {
@@ -84,7 +84,7 @@ class ShoppingListController extends AbstractController
     #[Route('/{id}/status', name: 'update_status', methods: ['PATCH'])]
     public function updateStatus(Request $request, ShoppingList $list): JsonResponse
     {
-        $this->assertOwner($list);
+        $this->assertAccessible($list);
         $data = json_decode($request->getContent(), true) ?? [];
 
         if (!isset($data['status'])) {
@@ -103,7 +103,7 @@ class ShoppingListController extends AbstractController
     #[Route('/{id}/products', name: 'add_product', methods: ['POST'])]
     public function addProduct(Request $request, ShoppingList $list): JsonResponse
     {
-        $this->assertOwner($list);
+        $this->assertAccessible($list);
         $data = json_decode($request->getContent(), true) ?? [];
 
         try {
@@ -122,7 +122,7 @@ class ShoppingListController extends AbstractController
         if (!$list) {
             return $this->json(['error' => 'Shopping list not found.'], Response::HTTP_NOT_FOUND);
         }
-        $this->assertOwner($list);
+        $this->assertAccessible($list);
 
         $product = $this->productRepository->find($productId);
         if (!$product || $product->getShoppingList() !== $list) {
@@ -132,6 +132,36 @@ class ShoppingListController extends AbstractController
         $this->shoppingListService->removeProduct($product);
 
         return $this->json(null, Response::HTTP_NO_CONTENT);
+    }
+
+    #[Route('/{id}/share', name: 'share', methods: ['POST'])]
+    public function share(Request $request, ShoppingList $list): JsonResponse
+    {
+        $this->assertOwner($list);
+        $data = json_decode($request->getContent(), true) ?? [];
+        $userId = trim((string) ($data['userId'] ?? ''));
+
+        if ($userId === '') {
+            return $this->json(['error' => 'Missing required field: userId'], Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $updated = $this->shoppingListService->shareWithUser($list, $userId, $this->getOwnerId());
+        } catch (\InvalidArgumentException $exception) {
+            return $this->json(['error' => $exception->getMessage()], Response::HTTP_BAD_REQUEST);
+        }
+
+        return $this->json($this->shoppingListService->serializeList($updated));
+    }
+
+    #[Route('/{id}/share/{userId}', name: 'unshare', methods: ['DELETE'])]
+    public function unshare(ShoppingList $list, string $userId): JsonResponse
+    {
+        $this->assertOwner($list);
+
+        $updated = $this->shoppingListService->unshareWithUser($list, $userId, $this->getOwnerId());
+
+        return $this->json($this->shoppingListService->serializeList($updated));
     }
 
     private function getOwnerId(): string
@@ -146,6 +176,20 @@ class ShoppingListController extends AbstractController
         if ($list->getOwnerId() !== $this->getOwnerId()) {
             throw $this->createAccessDeniedException('You do not own this shopping list.');
         }
+    }
+
+    private function assertAccessible(ShoppingList $list): void
+    {
+        $userId = $this->getOwnerId();
+        if ($list->getOwnerId() === $userId) {
+            return;
+        }
+
+        if (in_array($userId, $list->getSharedWithUserIds(), true)) {
+            return;
+        }
+
+        throw $this->createAccessDeniedException('You do not have access to this shopping list.');
     }
 
     /** @return string[] */

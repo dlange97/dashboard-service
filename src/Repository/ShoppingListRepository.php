@@ -26,9 +26,18 @@ class ShoppingListRepository extends ServiceEntityRepository
      */
     public function findAllByOwner(string $ownerId): array
     {
+        return $this->findAllAccessibleByUser($ownerId);
+    }
+
+    /**
+     * @return ShoppingList[]
+     */
+    public function findAllAccessibleByUser(string $userId): array
+    {
         return $this->createQueryBuilder('sl')
-            ->andWhere('sl.ownerId = :ownerId')
-            ->setParameter('ownerId', $ownerId)
+            ->andWhere('sl.ownerId = :userId OR sl.sharedWithUserIds LIKE :sharedMatch')
+            ->setParameter('userId', $userId)
+            ->setParameter('sharedMatch', '%"' . $userId . '"%')
             ->orderBy('sl.status', 'ASC')
             ->addOrderBy('sl.updatedAt', 'DESC')
             ->addOrderBy('sl.createdAt', 'DESC')

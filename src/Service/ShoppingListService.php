@@ -25,7 +25,7 @@ final class ShoppingListService
     /** @return ShoppingList[] */
     public function findAllByOwner(string $ownerId): array
     {
-        return $this->listRepository->findAllByOwner($ownerId);
+        return $this->listRepository->findAllAccessibleByUser($ownerId);
     }
 
     /**
@@ -135,6 +135,33 @@ final class ShoppingListService
         $this->productRepository->remove($product, true);
     }
 
+    public function shareWithUser(ShoppingList $list, string $userId, string $actorId): ShoppingList
+    {
+        $normalizedUserId = trim($userId);
+        if ($normalizedUserId === '') {
+            throw new \InvalidArgumentException('User ID cannot be empty.');
+        }
+
+        if ($list->getOwnerId() === $normalizedUserId) {
+            throw new \InvalidArgumentException('Owner already has access to this shopping list.');
+        }
+
+        $list->addSharedUserId($normalizedUserId);
+        $list->setUpdatedBy($this->resolveActorId($actorId));
+        $this->em->flush();
+
+        return $list;
+    }
+
+    public function unshareWithUser(ShoppingList $list, string $userId, string $actorId): ShoppingList
+    {
+        $list->removeSharedUserId($userId);
+        $list->setUpdatedBy($this->resolveActorId($actorId));
+        $this->em->flush();
+
+        return $list;
+    }
+
     /** @return array<string, mixed> */
     public function serializeList(ShoppingList $list): array
     {
@@ -144,6 +171,7 @@ final class ShoppingListService
             'status'    => $list->getStatus(),
             'dueDate'   => $list->getDueDate()?->format('Y-m-d'),
             'ownerId'   => $list->getOwnerId(),
+            'sharedWithUserIds' => $list->getSharedWithUserIds(),
             'createdBy' => $list->getCreatedBy(),
             'products'  => array_map($this->serializeProduct(...), $list->getProducts()->toArray()),
             'createdAt' => $list->getCreatedAt()?->format('c'),

@@ -26,9 +26,18 @@ class TodoItemRepository extends ServiceEntityRepository
      */
     public function findAllByOwner(string $ownerId): array
     {
+        return $this->findAllAccessibleByUser($ownerId);
+    }
+
+    /**
+     * @return TodoItem[]
+     */
+    public function findAllAccessibleByUser(string $userId): array
+    {
         return $this->createQueryBuilder('t')
-            ->andWhere('t.ownerId = :ownerId')
-            ->setParameter('ownerId', $ownerId)
+            ->andWhere('t.ownerId = :userId OR t.sharedWithUserIds LIKE :sharedMatch')
+            ->setParameter('userId', $userId)
+            ->setParameter('sharedMatch', '%"' . $userId . '"%')
             ->orderBy('t.createdAt', 'ASC')
             ->getQuery()
             ->getResult();
