@@ -22,7 +22,7 @@ final class TodoService
     /** @return TodoItem[] */
     public function findAllByOwner(string $ownerId): array
     {
-        return $this->repository->findAllByOwner($ownerId);
+        return $this->repository->findAllAccessibleByUser($ownerId);
     }
 
     /**
@@ -83,6 +83,33 @@ final class TodoService
         $this->repository->remove($item, true);
     }
 
+    public function shareWithUser(TodoItem $item, string $userId, string $actorId): TodoItem
+    {
+        $normalizedUserId = trim($userId);
+        if ($normalizedUserId === '') {
+            throw new \InvalidArgumentException('User ID cannot be empty.');
+        }
+
+        if ($item->getOwnerId() === $normalizedUserId) {
+            throw new \InvalidArgumentException('Owner already has access to this todo item.');
+        }
+
+        $item->addSharedUserId($normalizedUserId);
+        $item->setUpdatedBy($this->resolveActorId($actorId));
+        $this->em->flush();
+
+        return $item;
+    }
+
+    public function unshareWithUser(TodoItem $item, string $userId, string $actorId): TodoItem
+    {
+        $item->removeSharedUserId($userId);
+        $item->setUpdatedBy($this->resolveActorId($actorId));
+        $this->em->flush();
+
+        return $item;
+    }
+
     /** @return array<string, mixed> */
     public function serialize(TodoItem $item): array
     {
@@ -92,6 +119,7 @@ final class TodoService
             'done'      => $item->isDone(),
             'dueDate'   => $item->getDueDate()?->format('Y-m-d'),
             'ownerId'   => $item->getOwnerId(),
+            'sharedWithUserIds' => $item->getSharedWithUserIds(),
             'createdBy' => $item->getCreatedBy(),
             'createdAt' => $item->getCreatedAt()?->format('c'),
             'updatedAt' => $item->getUpdatedAt()?->format('c'),

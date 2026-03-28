@@ -45,7 +45,7 @@ final class ShoppingListServiceTest extends TestCase
 
         $this->listRepository
             ->expects($this->once())
-            ->method('findAllByOwner')
+            ->method('findAllAccessibleByUser')
             ->with($ownerId)
             ->willReturn([$list]);
 

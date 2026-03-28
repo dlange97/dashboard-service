@@ -41,6 +41,10 @@ class ShoppingList
     #[ORM\Column(type: 'string', length: 36, nullable: true)]
     private ?string $ownerId = null;
 
+    /** @var list<string> */
+    #[ORM\Column(type: 'json')]
+    private array $sharedWithUserIds = [];
+
     /** @var Collection<int, ShoppingListProduct> */
     #[ORM\OneToMany(targetEntity: ShoppingListProduct::class, mappedBy: 'shoppingList', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ORM\OrderBy(['position' => 'ASC'])]
@@ -99,6 +103,65 @@ class ShoppingList
     public function setOwnerId(?string $ownerId): static
     {
         $this->ownerId = $ownerId;
+        return $this;
+    }
+
+    /** @return list<string> */
+    public function getSharedWithUserIds(): array
+    {
+        return array_values(array_unique(array_filter(
+            $this->sharedWithUserIds,
+            static fn(mixed $value): bool => is_string($value) && trim($value) !== '',
+        )));
+    }
+
+    /** @param list<string> $userIds */
+    public function setSharedWithUserIds(array $userIds): static
+    {
+        $normalized = [];
+        foreach ($userIds as $userId) {
+            $trimmed = trim((string) $userId);
+            if ($trimmed === '') {
+                continue;
+            }
+            if (!in_array($trimmed, $normalized, true)) {
+                $normalized[] = $trimmed;
+            }
+        }
+
+        $this->sharedWithUserIds = $normalized;
+
+        return $this;
+    }
+
+    public function addSharedUserId(string $userId): static
+    {
+        $trimmed = trim($userId);
+        if ($trimmed === '') {
+            return $this;
+        }
+
+        $shared = $this->getSharedWithUserIds();
+        if (!in_array($trimmed, $shared, true)) {
+            $shared[] = $trimmed;
+            $this->sharedWithUserIds = $shared;
+        }
+
+        return $this;
+    }
+
+    public function removeSharedUserId(string $userId): static
+    {
+        $trimmed = trim($userId);
+        if ($trimmed === '') {
+            return $this;
+        }
+
+        $this->sharedWithUserIds = array_values(array_filter(
+            $this->getSharedWithUserIds(),
+            static fn(string $existing): bool => $existing !== $trimmed,
+        ));
+
         return $this;
     }
 

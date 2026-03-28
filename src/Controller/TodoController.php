@@ -16,8 +16,9 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/dashboard/todos', name: 'dashboard_todos_')]
 class TodoController extends AbstractController
 {
-    public function __construct(private readonly TodoService $todoService)
-    {
+    public function __construct(
+        private readonly TodoService $todoService,
+    ) {
     }
 
     #[Route('', name: 'index', methods: ['GET'])]
@@ -38,7 +39,7 @@ class TodoController extends AbstractController
     #[Route('/{id}', name: 'update', methods: ['PUT', 'PATCH'])]
     public function update(Request $request, TodoItem $item): JsonResponse
     {
-        $this->assertOwner($item);
+        $this->assertAccessible($item);
         $data = json_decode($request->getContent(), true) ?? [];
         $item = $this->todoService->update($item, $data, $this->getOwnerId());
         return $this->json($this->todoService->serialize($item));
@@ -55,9 +56,39 @@ class TodoController extends AbstractController
     #[Route('/{id}/toggle', name: 'toggle', methods: ['PATCH'])]
     public function toggle(TodoItem $item): JsonResponse
     {
-        $this->assertOwner($item);
+        $this->assertAccessible($item);
         $item = $this->todoService->toggle($item, $this->getOwnerId());
         return $this->json($this->todoService->serialize($item));
+    }
+
+    #[Route('/{id}/share', name: 'share', methods: ['POST'])]
+    public function share(Request $request, TodoItem $item): JsonResponse
+    {
+        $this->assertOwner($item);
+        $data = json_decode($request->getContent(), true) ?? [];
+        $userId = trim((string) ($data['userId'] ?? ''));
+
+        if ($userId === '') {
+            return $this->json(['error' => 'Missing required field: userId'], Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $updated = $this->todoService->shareWithUser($item, $userId, $this->getOwnerId());
+        } catch (\InvalidArgumentException $exception) {
+            return $this->json(['error' => $exception->getMessage()], Response::HTTP_BAD_REQUEST);
+        }
+
+        return $this->json($this->todoService->serialize($updated));
+    }
+
+    #[Route('/{id}/share/{userId}', name: 'unshare', methods: ['DELETE'])]
+    public function unshare(TodoItem $item, string $userId): JsonResponse
+    {
+        $this->assertOwner($item);
+
+        $updated = $this->todoService->unshareWithUser($item, $userId, $this->getOwnerId());
+
+        return $this->json($this->todoService->serialize($updated));
     }
 
     private function getOwnerId(): string
@@ -72,5 +103,19 @@ class TodoController extends AbstractController
         if ($item->getOwnerId() !== $this->getOwnerId()) {
             throw $this->createAccessDeniedException('You do not own this todo item.');
         }
+    }
+
+    private function assertAccessible(TodoItem $item): void
+    {
+        $userId = $this->getOwnerId();
+        if ($item->getOwnerId() === $userId) {
+            return;
+        }
+
+        if (in_array($userId, $item->getSharedWithUserIds(), true)) {
+            return;
+        }
+
+        throw $this->createAccessDeniedException('You do not have access to this todo item.');
     }
 }
