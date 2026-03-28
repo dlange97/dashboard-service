@@ -24,12 +24,19 @@ echo "=== JWT public key found ==="
 
 cd /app
 
+needs_composer_install() {
+    if [ ! -f vendor/autoload.php ]; then
+        return 0
+    fi
+
+    php -r "require 'vendor/autoload.php';" >/dev/null 2>&1 || return 0
+    return 1
+}
+
 # ── Composer ────────────────────────────────────────────────
-if [ ! -d vendor ] || [ ! -f vendor/autoload.php ]; then
+if needs_composer_install; then
     echo "Installing dependencies..."
-    composer install --no-interaction --optimize-autoloader || true
-else
-    composer update --no-interaction 2>/dev/null || true
+    composer install --no-interaction --optimize-autoloader
 fi
 
 # ── Migrations & Cache ─────────────────────────────────────
