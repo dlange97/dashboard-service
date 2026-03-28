@@ -118,6 +118,4 @@ class TodoController extends AbstractController
 
         throw $this->createAccessDeniedException('You do not have access to this todo item.');
     }
-
 }
-

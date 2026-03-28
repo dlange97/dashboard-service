@@ -37,7 +37,7 @@ final class TodoServiceTest extends TestCase
 
         $this->repository
             ->expects($this->once())
-            ->method('findAllByOwner')
+            ->method('findAllAccessibleByUser')
             ->with($ownerId)
             ->willReturn([$item]);
 
