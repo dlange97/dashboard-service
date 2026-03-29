@@ -195,7 +195,7 @@ final class ShoppingListService
     }
 
     /**
-     * @param array{name?: string, qty?: int, weight?: string|null, bought?: bool} $data
+     * @param array{name?: string, qty?: int, weight?: string|null, category?: string|null, bought?: bool} $data
      */
     private function buildProduct(array $data, int $position, string $ownerId): ShoppingListProduct
     {
