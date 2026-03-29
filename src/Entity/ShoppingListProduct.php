@@ -38,6 +38,9 @@ class ShoppingListProduct
     #[ORM\Column(type: 'integer')]
     private int $position = 0;
 
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $category = null;
+
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
     private bool $bought = false;
 
@@ -111,6 +114,17 @@ class ShoppingListProduct
     public function setBought(bool $bought): static
     {
         $this->bought = $bought;
+        return $this;
+    }
+
+    public function getCategory(): ?string
+    {
+        return $this->category;
+    }
+
+    public function setCategory(?string $category): static
+    {
+        $this->category = $category;
         return $this;
     }
 }

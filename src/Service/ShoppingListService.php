@@ -187,6 +187,7 @@ final class ShoppingListService
             'name'     => $product->getName(),
             'qty'      => $product->getQty(),
             'weight'   => $product->getWeight(),
+            'category' => $product->getCategory(),
             'bought'   => $product->isBought(),
             'position' => $product->getPosition(),
             'createdBy' => $product->getCreatedBy(),
@@ -194,7 +195,7 @@ final class ShoppingListService
     }
 
     /**
-     * @param array{name?: string, qty?: int, weight?: string|null, bought?: bool} $data
+     * @param array{name?: string, qty?: int, weight?: string|null, category?: string|null, bought?: bool} $data
      */
     private function buildProduct(array $data, int $position, string $ownerId): ShoppingListProduct
     {
@@ -202,6 +203,7 @@ final class ShoppingListService
         $product->setName($data['name'] ?? '');
         $product->setQty((int) ($data['qty'] ?? 1));
         $product->setWeight($data['weight'] ?? null);
+        $product->setCategory($data['category'] ?? null);
         $product->setBought((bool) ($data['bought'] ?? false));
         $product->setPosition($position);
         $actorId = $this->resolveActorId($ownerId);
