@@ -7,6 +7,7 @@ namespace App\Service;
 use App\Entity\TodoItem;
 use App\Repository\TodoItemRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -108,6 +109,26 @@ final class TodoService
         $this->em->flush();
 
         return $item;
+    }
+
+    public function assertOwner(TodoItem $item, string $ownerId): void
+    {
+        if ($item->getOwnerId() !== $ownerId) {
+            throw new AccessDeniedHttpException('You do not own this todo item.');
+        }
+    }
+
+    public function assertAccessible(TodoItem $item, string $userId): void
+    {
+        if ($item->getOwnerId() === $userId) {
+            return;
+        }
+
+        if (in_array($userId, $item->getSharedWithUserIds(), true)) {
+            return;
+        }
+
+        throw new AccessDeniedHttpException('You do not have access to this todo item.');
     }
 
     /** @return array<string, mixed> */
