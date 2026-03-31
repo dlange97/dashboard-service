@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\TodoItemRepository;
+use App\Traits\HasInstanceId;
 use App\Traits\TimestampableTrait;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -14,6 +15,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\HasLifecycleCallbacks]
 class TodoItem
 {
+    use HasInstanceId;
     use TimestampableTrait;
 
     #[ORM\Id]
