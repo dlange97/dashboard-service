@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\ShoppingListRepository;
+use App\Traits\HasInstanceId;
 use App\Traits\TimestampableTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -16,6 +17,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\HasLifecycleCallbacks]
 class ShoppingList
 {
+    use HasInstanceId;
     use TimestampableTrait;
 
     public const STATUS_ACTIVE = 'active';
