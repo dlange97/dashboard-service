@@ -137,6 +137,7 @@ final class ShoppingListService
         $this->productRepository->remove($product, true);
     }
 
+    /** @return array{list: ShoppingList, product: ShoppingListProduct} */
     public function findProductOrFail(string $listId, string $productId): array
     {
         $list = $this->listRepository->find($listId);
