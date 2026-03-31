@@ -6,8 +6,6 @@ namespace App\Controller;
 
 use App\Entity\ShoppingList;
 use App\Entity\ShoppingListProduct;
-use App\Repository\ShoppingListProductRepository;
-use App\Repository\ShoppingListRepository;
 use MyDashboard\Shared\Security\JwtUser;
 use App\Service\ShoppingListService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -22,8 +20,6 @@ class ShoppingListController extends AbstractController
 {
     public function __construct(
         private readonly ShoppingListService $shoppingListService,
-        private readonly ShoppingListRepository $listRepository,
-        private readonly ShoppingListProductRepository $productRepository,
     ) {
     }
 
@@ -52,7 +48,7 @@ class ShoppingListController extends AbstractController
     #[Route('/{id}', name: 'show', methods: ['GET'])]
     public function show(ShoppingList $list): JsonResponse
     {
-        $this->assertAccessible($list);
+        $this->shoppingListService->assertAccessible($list, $this->getOwnerId());
 
         return $this->json($this->shoppingListService->serializeList($list));
     }
@@ -60,7 +56,7 @@ class ShoppingListController extends AbstractController
     #[Route('/{id}', name: 'update', methods: ['PUT', 'PATCH'])]
     public function update(Request $request, ShoppingList $list): JsonResponse
     {
-        $this->assertAccessible($list);
+        $this->shoppingListService->assertAccessible($list, $this->getOwnerId());
         $data = json_decode($request->getContent(), true) ?? [];
 
         try {
@@ -75,7 +71,7 @@ class ShoppingListController extends AbstractController
     #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
     public function delete(ShoppingList $list): JsonResponse
     {
-        $this->assertOwner($list);
+        $this->shoppingListService->assertOwner($list, $this->getOwnerId());
         $this->shoppingListService->delete($list);
 
         return $this->json(null, Response::HTTP_NO_CONTENT);
@@ -84,7 +80,7 @@ class ShoppingListController extends AbstractController
     #[Route('/{id}/status', name: 'update_status', methods: ['PATCH'])]
     public function updateStatus(Request $request, ShoppingList $list): JsonResponse
     {
-        $this->assertAccessible($list);
+        $this->shoppingListService->assertAccessible($list, $this->getOwnerId());
         $data = json_decode($request->getContent(), true) ?? [];
 
         if (!isset($data['status'])) {
@@ -103,7 +99,7 @@ class ShoppingListController extends AbstractController
     #[Route('/{id}/products', name: 'add_product', methods: ['POST'])]
     public function addProduct(Request $request, ShoppingList $list): JsonResponse
     {
-        $this->assertAccessible($list);
+        $this->shoppingListService->assertAccessible($list, $this->getOwnerId());
         $data = json_decode($request->getContent(), true) ?? [];
 
         try {
@@ -118,18 +114,9 @@ class ShoppingListController extends AbstractController
     #[Route('/{listId}/products/{productId}', name: 'remove_product', methods: ['DELETE'])]
     public function removeProduct(string $listId, string $productId): JsonResponse
     {
-        $list = $this->listRepository->find($listId);
-        if (!$list) {
-            return $this->json(['error' => 'Shopping list not found.'], Response::HTTP_NOT_FOUND);
-        }
-        $this->assertAccessible($list);
-
-        $product = $this->productRepository->find($productId);
-        if (!$product || $product->getShoppingList() !== $list) {
-            return $this->json(['error' => 'Product not found in this list.'], Response::HTTP_NOT_FOUND);
-        }
-
-        $this->shoppingListService->removeProduct($product);
+        $result = $this->shoppingListService->findProductOrFail($listId, $productId);
+        $this->shoppingListService->assertAccessible($result['list'], $this->getOwnerId());
+        $this->shoppingListService->removeProduct($result['product']);
 
         return $this->json(null, Response::HTTP_NO_CONTENT);
     }
@@ -137,7 +124,7 @@ class ShoppingListController extends AbstractController
     #[Route('/{id}/share', name: 'share', methods: ['POST'])]
     public function share(Request $request, ShoppingList $list): JsonResponse
     {
-        $this->assertOwner($list);
+        $this->shoppingListService->assertOwner($list, $this->getOwnerId());
         $data = json_decode($request->getContent(), true) ?? [];
         $userId = trim((string) ($data['userId'] ?? ''));
 
@@ -157,7 +144,7 @@ class ShoppingListController extends AbstractController
     #[Route('/{id}/share/{userId}', name: 'unshare', methods: ['DELETE'])]
     public function unshare(ShoppingList $list, string $userId): JsonResponse
     {
-        $this->assertOwner($list);
+        $this->shoppingListService->assertOwner($list, $this->getOwnerId());
 
         $updated = $this->shoppingListService->unshareWithUser($list, $userId, $this->getOwnerId());
 
@@ -169,27 +156,6 @@ class ShoppingListController extends AbstractController
         /** @var JwtUser $user */
         $user = $this->getUser();
         return $user->getUserId();
-    }
-
-    private function assertOwner(ShoppingList $list): void
-    {
-        if ($list->getOwnerId() !== $this->getOwnerId()) {
-            throw $this->createAccessDeniedException('You do not own this shopping list.');
-        }
-    }
-
-    private function assertAccessible(ShoppingList $list): void
-    {
-        $userId = $this->getOwnerId();
-        if ($list->getOwnerId() === $userId) {
-            return;
-        }
-
-        if (in_array($userId, $list->getSharedWithUserIds(), true)) {
-            return;
-        }
-
-        throw $this->createAccessDeniedException('You do not have access to this shopping list.');
     }
 
     /** @return string[] */

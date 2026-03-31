@@ -39,7 +39,7 @@ class TodoController extends AbstractController
     #[Route('/{id}', name: 'update', methods: ['PUT', 'PATCH'])]
     public function update(Request $request, TodoItem $item): JsonResponse
     {
-        $this->assertAccessible($item);
+        $this->todoService->assertAccessible($item, $this->getOwnerId());
         $data = json_decode($request->getContent(), true) ?? [];
         $item = $this->todoService->update($item, $data, $this->getOwnerId());
         return $this->json($this->todoService->serialize($item));
@@ -48,7 +48,7 @@ class TodoController extends AbstractController
     #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
     public function delete(TodoItem $item): JsonResponse
     {
-        $this->assertOwner($item);
+        $this->todoService->assertOwner($item, $this->getOwnerId());
         $this->todoService->delete($item);
         return $this->json(null, Response::HTTP_NO_CONTENT);
     }
@@ -56,7 +56,7 @@ class TodoController extends AbstractController
     #[Route('/{id}/toggle', name: 'toggle', methods: ['PATCH'])]
     public function toggle(TodoItem $item): JsonResponse
     {
-        $this->assertAccessible($item);
+        $this->todoService->assertAccessible($item, $this->getOwnerId());
         $item = $this->todoService->toggle($item, $this->getOwnerId());
         return $this->json($this->todoService->serialize($item));
     }
@@ -64,7 +64,7 @@ class TodoController extends AbstractController
     #[Route('/{id}/share', name: 'share', methods: ['POST'])]
     public function share(Request $request, TodoItem $item): JsonResponse
     {
-        $this->assertOwner($item);
+        $this->todoService->assertOwner($item, $this->getOwnerId());
         $data = json_decode($request->getContent(), true) ?? [];
         $userId = trim((string) ($data['userId'] ?? ''));
 
@@ -84,7 +84,7 @@ class TodoController extends AbstractController
     #[Route('/{id}/share/{userId}', name: 'unshare', methods: ['DELETE'])]
     public function unshare(TodoItem $item, string $userId): JsonResponse
     {
-        $this->assertOwner($item);
+        $this->todoService->assertOwner($item, $this->getOwnerId());
 
         $updated = $this->todoService->unshareWithUser($item, $userId, $this->getOwnerId());
 
@@ -96,26 +96,5 @@ class TodoController extends AbstractController
         /** @var JwtUser $user */
         $user = $this->getUser();
         return $user->getUserId();
-    }
-
-    private function assertOwner(TodoItem $item): void
-    {
-        if ($item->getOwnerId() !== $this->getOwnerId()) {
-            throw $this->createAccessDeniedException('You do not own this todo item.');
-        }
-    }
-
-    private function assertAccessible(TodoItem $item): void
-    {
-        $userId = $this->getOwnerId();
-        if ($item->getOwnerId() === $userId) {
-            return;
-        }
-
-        if (in_array($userId, $item->getSharedWithUserIds(), true)) {
-            return;
-        }
-
-        throw $this->createAccessDeniedException('You do not have access to this todo item.');
     }
 }

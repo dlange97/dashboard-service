@@ -9,6 +9,8 @@ use App\Entity\ShoppingListProduct;
 use App\Repository\ShoppingListProductRepository;
 use App\Repository\ShoppingListRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -133,6 +135,42 @@ final class ShoppingListService
     public function removeProduct(ShoppingListProduct $product): void
     {
         $this->productRepository->remove($product, true);
+    }
+
+    /** @return array{list: ShoppingList, product: ShoppingListProduct} */
+    public function findProductOrFail(string $listId, string $productId): array
+    {
+        $list = $this->listRepository->find($listId);
+        if (!$list) {
+            throw new NotFoundHttpException('Shopping list not found.');
+        }
+
+        $product = $this->productRepository->find($productId);
+        if (!$product || $product->getShoppingList() !== $list) {
+            throw new NotFoundHttpException('Product not found in this list.');
+        }
+
+        return ['list' => $list, 'product' => $product];
+    }
+
+    public function assertOwner(ShoppingList $list, string $ownerId): void
+    {
+        if ($list->getOwnerId() !== $ownerId) {
+            throw new AccessDeniedHttpException('You do not own this shopping list.');
+        }
+    }
+
+    public function assertAccessible(ShoppingList $list, string $userId): void
+    {
+        if ($list->getOwnerId() === $userId) {
+            return;
+        }
+
+        if (in_array($userId, $list->getSharedWithUserIds(), true)) {
+            return;
+        }
+
+        throw new AccessDeniedHttpException('You do not have access to this shopping list.');
     }
 
     public function shareWithUser(ShoppingList $list, string $userId, string $actorId): ShoppingList
