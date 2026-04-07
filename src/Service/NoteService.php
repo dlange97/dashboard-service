@@ -33,7 +33,7 @@ final class NoteService
     public function create(array $data, string $ownerId): Note
     {
         $note = new Note();
-        $note->setTitle(trim($data['title'] ?? ''));
+        $note->setTitle(trim($data['title']));
         $note->setContent(trim($data['content'] ?? ''));
         $note->setOwnerId($ownerId);
         $actorId = $this->resolveActorId($ownerId);
@@ -56,7 +56,7 @@ final class NoteService
             $note->setTitle(trim($data['title']));
         }
         if (array_key_exists('content', $data)) {
-            $note->setContent(trim($data['content'] ?? ''));
+            $note->setContent(trim($data['content']));
         }
         $note->setUpdatedBy($this->resolveActorId($ownerId));
 

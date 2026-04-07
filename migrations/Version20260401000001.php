@@ -26,8 +26,8 @@ final class Version20260401000001 extends AbstractMigration
                 instance_id      VARCHAR(36)  DEFAULT NULL,
                 created_at       DATETIME     NOT NULL COMMENT \'(DC2Type:datetime_immutable)\',
                 updated_at       DATETIME     NOT NULL COMMENT \'(DC2Type:datetime_immutable)\',
-                created_by       VARCHAR(36)  DEFAULT NULL,
-                updated_by       VARCHAR(36)  DEFAULT NULL,
+                created_by       INT          DEFAULT NULL,
+                updated_by       INT          DEFAULT NULL,
                 PRIMARY KEY (id),
                 INDEX IDX_NOTE_OWNER (owner_id),
                 INDEX IDX_NOTE_INSTANCE (instance_id)
