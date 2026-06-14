@@ -7,6 +7,7 @@ namespace App\Tests\Service;
 use App\Entity\ShoppingList;
 use App\Repository\ShoppingListProductRepository;
 use App\Repository\ShoppingListRepository;
+use App\Service\ActorIdResolver;
 use App\Service\ShoppingListService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -21,6 +22,7 @@ final class ShoppingListServiceTest extends TestCase
     private ShoppingListProductRepository&MockObject $productRepository;
     private EntityManagerInterface&MockObject $em;
     private ValidatorInterface&MockObject $validator;
+    private ActorIdResolver&MockObject $actorIdResolver;
     private ShoppingListService $service;
 
     protected function setUp(): void
@@ -29,12 +31,16 @@ final class ShoppingListServiceTest extends TestCase
         $this->productRepository = $this->createMock(ShoppingListProductRepository::class);
         $this->em                = $this->createMock(EntityManagerInterface::class);
         $this->validator         = $this->createMock(ValidatorInterface::class);
+        $this->actorIdResolver   = $this->createMock(ActorIdResolver::class);
+
+        $this->actorIdResolver->method('resolve')->willReturn(456);
 
         $this->service = new ShoppingListService(
             $this->listRepository,
             $this->productRepository,
             $this->em,
             $this->validator,
+            $this->actorIdResolver,
         );
     }
 
@@ -65,6 +71,7 @@ final class ShoppingListServiceTest extends TestCase
 
         $this->assertSame('Weekly shop', $list->getName());
         $this->assertSame($ownerId, $list->getOwnerId());
+        $this->assertSame(456, $list->getCreatedBy());
     }
 
     public function testCreateWithProducts(): void

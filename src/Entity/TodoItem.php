@@ -33,15 +33,12 @@ class TodoItem
     #[ORM\Column(type: 'date_immutable', nullable: true)]
     private ?\DateTimeImmutable $dueDate = null;
 
-    /** Owner UUID from auth-service (no FK – cross-service boundary). */
     #[ORM\Column(type: 'string', length: 36, nullable: true)]
     private ?string $ownerId = null;
 
     /** @var list<string> */
     #[ORM\Column(type: 'json')]
     private array $sharedWithUserIds = [];
-
-    // ─── Getters / Setters ─────────────────────────────────
 
     public function getId(): ?int
     {

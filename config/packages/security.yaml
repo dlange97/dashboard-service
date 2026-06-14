@@ -21,7 +21,8 @@ security:
 
   access_control:
     - { path: ^/dashboard/health, roles: PUBLIC_ACCESS }
-    - { path: ^/dashboard/docs(?:\.json)?$, roles: PUBLIC_ACCESS }
+    - { path: ^/dashboard/docs(?:\.json)?$, roles: ROLE_ADMIN }
+    - { path: ^/dashboard/admin/security-log, roles: ROLE_ADMIN }
     - {
         path: ^/dashboard/todos,
         methods: [GET],
@@ -43,3 +44,8 @@ security:
         allow_if: "user and 'shopping.manage' in user.getPermissions()",
       }
     - { path: ^/dashboard/, roles: ROLE_USER }
+
+when@prod:
+  security:
+    access_control:
+      - { path: ^/, requires_channel: https }

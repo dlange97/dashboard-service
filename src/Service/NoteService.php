@@ -17,6 +17,7 @@ final class NoteService
         private readonly NoteRepository $repository,
         private readonly EntityManagerInterface $em,
         private readonly ValidatorInterface $validator,
+        private readonly ActorIdResolver $actorIdResolver,
     ) {
     }
 
@@ -27,7 +28,7 @@ final class NoteService
     }
 
     /**
-     * @param array{title: string, content?: string} $data
+     * @param array{title: string, content?: string, color?: string} $data
      * @throws ValidationFailedException
      */
     public function create(array $data, string $ownerId): Note
@@ -35,8 +36,9 @@ final class NoteService
         $note = new Note();
         $note->setTitle(trim($data['title']));
         $note->setContent(trim($data['content'] ?? ''));
+        $note->setColor($this->normalizeColor($data['color'] ?? null));
         $note->setOwnerId($ownerId);
-        $actorId = $this->resolveActorId($ownerId);
+        $actorId = $this->actorIdResolver->resolve($ownerId);
         $note->setCreatedBy($actorId);
         $note->setUpdatedBy($actorId);
 
@@ -47,7 +49,7 @@ final class NoteService
     }
 
     /**
-     * @param array{title?: string, content?: string} $data
+     * @param array{title?: string, content?: string, color?: string} $data
      * @throws ValidationFailedException
      */
     public function update(Note $note, array $data, string $ownerId): Note
@@ -58,7 +60,10 @@ final class NoteService
         if (array_key_exists('content', $data)) {
             $note->setContent(trim($data['content']));
         }
-        $note->setUpdatedBy($this->resolveActorId($ownerId));
+        if (array_key_exists('color', $data)) {
+            $note->setColor($this->normalizeColor($data['color']));
+        }
+        $note->setUpdatedBy($this->actorIdResolver->resolve($ownerId));
 
         $this->validate($note);
         $this->em->flush();
@@ -83,7 +88,7 @@ final class NoteService
         }
 
         $note->addSharedUserId($normalizedUserId);
-        $note->setUpdatedBy($this->resolveActorId($actorId));
+        $note->setUpdatedBy($this->actorIdResolver->resolve($actorId));
         $this->em->flush();
 
         return $note;
@@ -92,7 +97,7 @@ final class NoteService
     public function unshareWithUser(Note $note, string $userId, string $actorId): Note
     {
         $note->removeSharedUserId($userId);
-        $note->setUpdatedBy($this->resolveActorId($actorId));
+        $note->setUpdatedBy($this->actorIdResolver->resolve($actorId));
         $this->em->flush();
 
         return $note;
@@ -125,6 +130,7 @@ final class NoteService
             'id'                => $note->getId(),
             'title'             => $note->getTitle(),
             'content'           => $note->getContent(),
+            'color'             => $note->getColor(),
             'ownerId'           => $note->getOwnerId(),
             'sharedWithUserIds' => $note->getSharedWithUserIds(),
             'createdBy'         => $note->getCreatedBy(),
@@ -133,19 +139,18 @@ final class NoteService
         ];
     }
 
-    private function resolveActorId(string $ownerId): int
+    private function normalizeColor(mixed $value): string
     {
-        if (is_numeric($ownerId)) {
-            $numericId = (int) $ownerId;
-            if ($numericId > 0 && $numericId <= 2147483647) {
-                return $numericId;
-            }
+        if (!is_string($value)) {
+            return '#fef3c7';
         }
 
-        $hash = crc32($ownerId);
-        $unsignedHash = (int) sprintf('%u', $hash);
+        $color = trim($value);
+        if (preg_match('/^#[0-9a-fA-F]{6}$/', $color) === 1) {
+            return strtolower($color);
+        }
 
-        return ($unsignedHash % 2147483646) + 1;
+        return '#fef3c7';
     }
 
     /** @throws ValidationFailedException */

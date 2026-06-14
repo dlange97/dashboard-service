@@ -30,7 +30,9 @@ class Note
     #[ORM\Column(type: 'text')]
     private string $content = '';
 
-    /** Owner UUID from auth-service (no FK – cross-service boundary). */
+    #[ORM\Column(type: 'string', length: 7, options: ['default' => '#fef3c7'])]
+    private string $color = '#fef3c7';
+
     #[ORM\Column(type: 'string', length: 36, nullable: true)]
     private ?string $ownerId = null;
 
@@ -38,7 +40,6 @@ class Note
     #[ORM\Column(type: 'json')]
     private array $sharedWithUserIds = [];
 
-    // ─── Getters / Setters ─────────────────────────────────
 
     public function getId(): ?int
     {
@@ -64,6 +65,17 @@ class Note
     public function setContent(string $content): static
     {
         $this->content = $content;
+        return $this;
+    }
+
+    public function getColor(): string
+    {
+        return $this->color;
+    }
+
+    public function setColor(string $color): static
+    {
+        $this->color = $color;
         return $this;
     }
 
