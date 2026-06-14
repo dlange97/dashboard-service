@@ -17,6 +17,7 @@ final class TodoService
         private readonly TodoItemRepository $repository,
         private readonly EntityManagerInterface $em,
         private readonly ValidatorInterface $validator,
+        private readonly ActorIdResolver $actorIdResolver,
     ) {
     }
 
@@ -37,7 +38,7 @@ final class TodoService
         $item->setDone(false);
         $item->setDueDate($this->parseDueDate($data['dueDate'] ?? null));
         $item->setOwnerId($ownerId);
-        $actorId = $this->resolveActorId($ownerId);
+        $actorId = $this->actorIdResolver->resolve($ownerId);
         $item->setCreatedBy($actorId);
         $item->setUpdatedBy($actorId);
 
@@ -62,7 +63,7 @@ final class TodoService
         if (array_key_exists('dueDate', $data)) {
             $item->setDueDate($this->parseDueDate($data['dueDate']));
         }
-        $item->setUpdatedBy($this->resolveActorId($ownerId));
+        $item->setUpdatedBy($this->actorIdResolver->resolve($ownerId));
 
         $this->validate($item);
         $this->em->flush();
@@ -73,7 +74,7 @@ final class TodoService
     public function toggle(TodoItem $item, string $ownerId): TodoItem
     {
         $item->setDone(!$item->isDone());
-        $item->setUpdatedBy($this->resolveActorId($ownerId));
+        $item->setUpdatedBy($this->actorIdResolver->resolve($ownerId));
         $this->em->flush();
 
         return $item;
@@ -96,7 +97,7 @@ final class TodoService
         }
 
         $item->addSharedUserId($normalizedUserId);
-        $item->setUpdatedBy($this->resolveActorId($actorId));
+        $item->setUpdatedBy($this->actorIdResolver->resolve($actorId));
         $this->em->flush();
 
         return $item;
@@ -105,7 +106,7 @@ final class TodoService
     public function unshareWithUser(TodoItem $item, string $userId, string $actorId): TodoItem
     {
         $item->removeSharedUserId($userId);
-        $item->setUpdatedBy($this->resolveActorId($actorId));
+        $item->setUpdatedBy($this->actorIdResolver->resolve($actorId));
         $this->em->flush();
 
         return $item;
@@ -164,21 +165,6 @@ final class TodoService
         }
 
         return new \DateTimeImmutable($normalized);
-    }
-
-    private function resolveActorId(string $ownerId): int
-    {
-        if (is_numeric($ownerId)) {
-            $numericId = (int) $ownerId;
-            if ($numericId > 0 && $numericId <= 2147483647) {
-                return $numericId;
-            }
-        }
-
-        $hash = crc32($ownerId);
-        $unsignedHash = (int) sprintf('%u', $hash);
-
-        return ($unsignedHash % 2147483646) + 1;
     }
 
     /** @throws ValidationFailedException */

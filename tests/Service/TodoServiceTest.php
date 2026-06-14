@@ -6,6 +6,7 @@ namespace App\Tests\Service;
 
 use App\Entity\TodoItem;
 use App\Repository\TodoItemRepository;
+use App\Service\ActorIdResolver;
 use App\Service\TodoService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -19,6 +20,7 @@ final class TodoServiceTest extends TestCase
     private TodoItemRepository&MockObject $repository;
     private EntityManagerInterface&MockObject $em;
     private ValidatorInterface&MockObject $validator;
+    private ActorIdResolver&MockObject $actorIdResolver;
     private TodoService $service;
 
     protected function setUp(): void
@@ -26,8 +28,11 @@ final class TodoServiceTest extends TestCase
         $this->repository = $this->createMock(TodoItemRepository::class);
         $this->em         = $this->createMock(EntityManagerInterface::class);
         $this->validator  = $this->createMock(ValidatorInterface::class);
+        $this->actorIdResolver = $this->createMock(ActorIdResolver::class);
 
-        $this->service = new TodoService($this->repository, $this->em, $this->validator);
+        $this->actorIdResolver->method('resolve')->willReturn(123);
+
+        $this->service = new TodoService($this->repository, $this->em, $this->validator, $this->actorIdResolver);
     }
 
     public function testFindAllByOwner(): void
@@ -65,6 +70,7 @@ final class TodoServiceTest extends TestCase
         $this->assertSame('Write tests', $item->getText());
         $this->assertFalse($item->isDone());
         $this->assertSame($ownerId, $item->getOwnerId());
+        $this->assertSame(123, $item->getCreatedBy());
     }
 
     public function testCreateTrimsTodoText(): void

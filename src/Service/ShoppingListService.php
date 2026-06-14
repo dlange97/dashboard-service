@@ -21,6 +21,7 @@ final class ShoppingListService
         private readonly ShoppingListProductRepository $productRepository,
         private readonly EntityManagerInterface $em,
         private readonly ValidatorInterface $validator,
+        private readonly ActorIdResolver $actorIdResolver,
     ) {
     }
 
@@ -43,7 +44,7 @@ final class ShoppingListService
             $list->setStatus((string) $data['status']);
         }
         $list->setOwnerId($ownerId);
-        $actorId = $this->resolveActorId($ownerId);
+        $actorId = $this->actorIdResolver->resolve($ownerId);
         $list->setCreatedBy($actorId);
         $list->setUpdatedBy($actorId);
 
@@ -76,7 +77,7 @@ final class ShoppingListService
             $list->setStatus((string) $data['status']);
         }
 
-        $list->setUpdatedBy($this->resolveActorId($ownerId));
+        $list->setUpdatedBy($this->actorIdResolver->resolve($ownerId));
 
         if (array_key_exists('products', $data) && is_array($data['products'])) {
             foreach ($list->getProducts()->toArray() as $product) {
@@ -106,7 +107,7 @@ final class ShoppingListService
     public function updateStatus(ShoppingList $list, string $status, string $ownerId): ShoppingList
     {
         $list->setStatus($status);
-        $list->setUpdatedBy($this->resolveActorId($ownerId));
+        $list->setUpdatedBy($this->actorIdResolver->resolve($ownerId));
         $this->validate($list);
         $this->em->flush();
 
@@ -185,7 +186,8 @@ final class ShoppingListService
         }
 
         $list->addSharedUserId($normalizedUserId);
-        $list->setUpdatedBy($this->resolveActorId($actorId));
+        $list->setUpdatedBy($this->actorIdResolver->resolve($actorId));
+
         $this->em->flush();
 
         return $list;
@@ -194,7 +196,7 @@ final class ShoppingListService
     public function unshareWithUser(ShoppingList $list, string $userId, string $actorId): ShoppingList
     {
         $list->removeSharedUserId($userId);
-        $list->setUpdatedBy($this->resolveActorId($actorId));
+        $list->setUpdatedBy($this->actorIdResolver->resolve($actorId));
         $this->em->flush();
 
         return $list;
@@ -244,7 +246,7 @@ final class ShoppingListService
         $product->setCategory($data['category'] ?? null);
         $product->setBought((bool) ($data['bought'] ?? false));
         $product->setPosition($position);
-        $actorId = $this->resolveActorId($ownerId);
+        $actorId = $this->actorIdResolver->resolve($ownerId);
         $product->setCreatedBy($actorId);
         $product->setUpdatedBy($actorId);
 
@@ -268,21 +270,6 @@ final class ShoppingListService
         }
 
         return new \DateTimeImmutable($normalized);
-    }
-
-    private function resolveActorId(string $ownerId): int
-    {
-        if (is_numeric($ownerId)) {
-            $numericId = (int) $ownerId;
-            if ($numericId > 0 && $numericId <= 2147483647) {
-                return $numericId;
-            }
-        }
-
-        $hash = crc32($ownerId);
-        $unsignedHash = (int) sprintf('%u', $hash);
-
-        return ($unsignedHash % 2147483646) + 1;
     }
 
     /** @throws ValidationFailedException */

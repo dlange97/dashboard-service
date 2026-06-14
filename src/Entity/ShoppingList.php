@@ -57,8 +57,6 @@ class ShoppingList
         $this->products = new ArrayCollection();
     }
 
-    // ─── Getters / Setters ─────────────────────────────────
-
     public function getId(): ?int
     {
         return $this->id;
