@@ -8,6 +8,7 @@ use App\Entity\Note;
 use App\Repository\NoteRepository;
 use App\Service\ActorIdResolver;
 use App\Service\NoteService;
+use App\Service\SharedResourceAccessService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -32,7 +33,13 @@ final class NoteServiceTest extends TestCase
         $this->actorIdResolver->method('resolve')->willReturn(789);
         $this->validator->method('validate')->willReturn(new ConstraintViolationList());
 
-        $this->service = new NoteService($this->repository, $this->em, $this->validator, $this->actorIdResolver);
+        $this->service = new NoteService(
+            $this->repository,
+            $this->em,
+            $this->validator,
+            $this->actorIdResolver,
+            new SharedResourceAccessService(),
+        );
     }
 
     public function testCreateAssignsResolvedActorId(): void

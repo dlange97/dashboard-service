@@ -7,6 +7,8 @@ namespace App\Tests\Service;
 use App\Entity\TodoItem;
 use App\Repository\TodoItemRepository;
 use App\Service\ActorIdResolver;
+use App\Service\Input\DateInputParser;
+use App\Service\SharedResourceAccessService;
 use App\Service\TodoService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -32,7 +34,14 @@ final class TodoServiceTest extends TestCase
 
         $this->actorIdResolver->method('resolve')->willReturn(123);
 
-        $this->service = new TodoService($this->repository, $this->em, $this->validator, $this->actorIdResolver);
+        $this->service = new TodoService(
+            $this->repository,
+            $this->em,
+            $this->validator,
+            $this->actorIdResolver,
+            new DateInputParser(),
+            new SharedResourceAccessService(),
+        );
     }
 
     public function testFindAllByOwner(): void

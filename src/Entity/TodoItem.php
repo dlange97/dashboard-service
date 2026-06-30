@@ -13,7 +13,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: TodoItemRepository::class)]
 #[ORM\Table(name: 'todo_item')]
 #[ORM\HasLifecycleCallbacks]
-class TodoItem
+class TodoItem implements ShareableResourceInterface
 {
     use HasInstanceId;
     use TimestampableTrait;
