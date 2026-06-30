@@ -8,6 +8,7 @@ use App\Entity\TodoItem;
 use App\Repository\TodoItemRepository;
 use App\Service\ActorIdResolver;
 use App\Service\Input\DateInputParser;
+use App\Service\NotificationGateway;
 use App\Service\SharedResourceAccessService;
 use App\Service\TodoService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -41,6 +42,7 @@ final class TodoServiceTest extends TestCase
             $this->actorIdResolver,
             new DateInputParser(),
             new SharedResourceAccessService(),
+            $this->createMock(NotificationGateway::class),
         );
     }
 

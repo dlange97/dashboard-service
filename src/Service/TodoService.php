@@ -20,6 +20,7 @@ final class TodoService
         private readonly ActorIdResolver $actorIdResolver,
         private readonly DateInputParser $dateInputParser,
         private readonly SharedResourceAccessService $sharedResourceAccessService,
+        private readonly NotificationGateway $notificationGateway,
     ) {
     }
 
@@ -98,6 +99,12 @@ final class TodoService
         $item->addSharedUserId($normalizedUserId);
         $item->setUpdatedBy($this->actorIdResolver->resolve($actorId));
         $this->em->flush();
+        $this->notificationGateway->notifyResourceShared(
+            'todo',
+            (string) $item->getText(),
+            $normalizedUserId,
+            $actorId,
+        );
 
         return $item;
     }

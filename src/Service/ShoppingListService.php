@@ -24,6 +24,7 @@ final class ShoppingListService
         private readonly ActorIdResolver $actorIdResolver,
         private readonly DateInputParser $dateInputParser,
         private readonly SharedResourceAccessService $sharedResourceAccessService,
+        private readonly NotificationGateway $notificationGateway,
     ) {
     }
 
@@ -178,6 +179,12 @@ final class ShoppingListService
         $list->setUpdatedBy($this->actorIdResolver->resolve($actorId));
 
         $this->em->flush();
+        $this->notificationGateway->notifyResourceShared(
+            'shopping-list',
+            (string) $list->getName(),
+            $normalizedUserId,
+            $actorId,
+        );
 
         return $list;
     }
