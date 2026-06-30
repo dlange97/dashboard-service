@@ -8,6 +8,8 @@ use App\Entity\ShoppingList;
 use App\Repository\ShoppingListProductRepository;
 use App\Repository\ShoppingListRepository;
 use App\Service\ActorIdResolver;
+use App\Service\Input\DateInputParser;
+use App\Service\SharedResourceAccessService;
 use App\Service\ShoppingListService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -41,6 +43,8 @@ final class ShoppingListServiceTest extends TestCase
             $this->em,
             $this->validator,
             $this->actorIdResolver,
+            new DateInputParser(),
+            new SharedResourceAccessService(),
         );
     }
 

@@ -7,7 +7,6 @@ namespace App\Service;
 use App\Entity\Note;
 use App\Repository\NoteRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -18,6 +17,7 @@ final class NoteService
         private readonly EntityManagerInterface $em,
         private readonly ValidatorInterface $validator,
         private readonly ActorIdResolver $actorIdResolver,
+        private readonly SharedResourceAccessService $sharedResourceAccessService,
     ) {
     }
 
@@ -78,14 +78,11 @@ final class NoteService
 
     public function shareWithUser(Note $note, string $userId, string $actorId): Note
     {
-        $normalizedUserId = trim($userId);
-        if ($normalizedUserId === '') {
-            throw new \InvalidArgumentException('User ID cannot be empty.');
-        }
-
-        if ($note->getOwnerId() === $normalizedUserId) {
-            throw new \InvalidArgumentException('Owner already has access to this note.');
-        }
+        $normalizedUserId = $this->sharedResourceAccessService->normalizeShareTarget(
+            $note,
+            $userId,
+            'Owner already has access to this note.',
+        );
 
         $note->addSharedUserId($normalizedUserId);
         $note->setUpdatedBy($this->actorIdResolver->resolve($actorId));
@@ -105,22 +102,12 @@ final class NoteService
 
     public function assertOwner(Note $note, string $ownerId): void
     {
-        if ($note->getOwnerId() !== $ownerId) {
-            throw new AccessDeniedHttpException('You do not own this note.');
-        }
+        $this->sharedResourceAccessService->assertOwner($note, $ownerId, 'You do not own this note.');
     }
 
     public function assertAccessible(Note $note, string $userId): void
     {
-        if ($note->getOwnerId() === $userId) {
-            return;
-        }
-
-        if (in_array($userId, $note->getSharedWithUserIds(), true)) {
-            return;
-        }
-
-        throw new AccessDeniedHttpException('You do not have access to this note.');
+        $this->sharedResourceAccessService->assertAccessible($note, $userId, 'You do not have access to this note.');
     }
 
     /** @return array<string, mixed> */

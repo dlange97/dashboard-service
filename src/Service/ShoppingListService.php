@@ -8,8 +8,8 @@ use App\Entity\ShoppingList;
 use App\Entity\ShoppingListProduct;
 use App\Repository\ShoppingListProductRepository;
 use App\Repository\ShoppingListRepository;
+use App\Service\Input\DateInputParser;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -22,6 +22,8 @@ final class ShoppingListService
         private readonly EntityManagerInterface $em,
         private readonly ValidatorInterface $validator,
         private readonly ActorIdResolver $actorIdResolver,
+        private readonly DateInputParser $dateInputParser,
+        private readonly SharedResourceAccessService $sharedResourceAccessService,
     ) {
     }
 
@@ -39,7 +41,7 @@ final class ShoppingListService
     {
         $list = new ShoppingList();
         $list->setName($data['name']);
-        $list->setDueDate($this->parseDueDate($data['dueDate'] ?? null));
+        $list->setDueDate($this->dateInputParser->parseNullableDate($data['dueDate'] ?? null, 'dueDate'));
         if (array_key_exists('status', $data)) {
             $list->setStatus((string) $data['status']);
         }
@@ -70,7 +72,7 @@ final class ShoppingListService
         }
 
         if (array_key_exists('dueDate', $data)) {
-            $list->setDueDate($this->parseDueDate($data['dueDate']));
+            $list->setDueDate($this->dateInputParser->parseNullableDate($data['dueDate'], 'dueDate'));
         }
 
         if (isset($data['status'])) {
@@ -156,34 +158,21 @@ final class ShoppingListService
 
     public function assertOwner(ShoppingList $list, string $ownerId): void
     {
-        if ($list->getOwnerId() !== $ownerId) {
-            throw new AccessDeniedHttpException('You do not own this shopping list.');
-        }
+        $this->sharedResourceAccessService->assertOwner($list, $ownerId, 'You do not own this shopping list.');
     }
 
     public function assertAccessible(ShoppingList $list, string $userId): void
     {
-        if ($list->getOwnerId() === $userId) {
-            return;
-        }
-
-        if (in_array($userId, $list->getSharedWithUserIds(), true)) {
-            return;
-        }
-
-        throw new AccessDeniedHttpException('You do not have access to this shopping list.');
+        $this->sharedResourceAccessService->assertAccessible($list, $userId, 'You do not have access to this shopping list.');
     }
 
     public function shareWithUser(ShoppingList $list, string $userId, string $actorId): ShoppingList
     {
-        $normalizedUserId = trim($userId);
-        if ($normalizedUserId === '') {
-            throw new \InvalidArgumentException('User ID cannot be empty.');
-        }
-
-        if ($list->getOwnerId() === $normalizedUserId) {
-            throw new \InvalidArgumentException('Owner already has access to this shopping list.');
-        }
+        $normalizedUserId = $this->sharedResourceAccessService->normalizeShareTarget(
+            $list,
+            $userId,
+            'Owner already has access to this shopping list.',
+        );
 
         $list->addSharedUserId($normalizedUserId);
         $list->setUpdatedBy($this->actorIdResolver->resolve($actorId));
@@ -251,25 +240,6 @@ final class ShoppingListService
         $product->setUpdatedBy($actorId);
 
         return $product;
-    }
-
-    private function parseDueDate(mixed $value): ?\DateTimeImmutable
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        $normalized = trim((string) $value);
-        if ($normalized == '') {
-            return null;
-        }
-
-        $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d', $normalized);
-        if ($parsed !== false) {
-            return $parsed;
-        }
-
-        return new \DateTimeImmutable($normalized);
     }
 
     /** @throws ValidationFailedException */

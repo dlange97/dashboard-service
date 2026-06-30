@@ -6,8 +6,8 @@ namespace App\Service;
 
 use App\Entity\TodoItem;
 use App\Repository\TodoItemRepository;
+use App\Service\Input\DateInputParser;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -18,6 +18,8 @@ final class TodoService
         private readonly EntityManagerInterface $em,
         private readonly ValidatorInterface $validator,
         private readonly ActorIdResolver $actorIdResolver,
+        private readonly DateInputParser $dateInputParser,
+        private readonly SharedResourceAccessService $sharedResourceAccessService,
     ) {
     }
 
@@ -36,7 +38,7 @@ final class TodoService
         $item = new TodoItem();
         $item->setText(trim($data['text']));
         $item->setDone(false);
-        $item->setDueDate($this->parseDueDate($data['dueDate'] ?? null));
+        $item->setDueDate($this->dateInputParser->parseNullableDate($data['dueDate'] ?? null, 'dueDate'));
         $item->setOwnerId($ownerId);
         $actorId = $this->actorIdResolver->resolve($ownerId);
         $item->setCreatedBy($actorId);
@@ -61,7 +63,7 @@ final class TodoService
             $item->setDone((bool) $data['done']);
         }
         if (array_key_exists('dueDate', $data)) {
-            $item->setDueDate($this->parseDueDate($data['dueDate']));
+            $item->setDueDate($this->dateInputParser->parseNullableDate($data['dueDate'], 'dueDate'));
         }
         $item->setUpdatedBy($this->actorIdResolver->resolve($ownerId));
 
@@ -87,14 +89,11 @@ final class TodoService
 
     public function shareWithUser(TodoItem $item, string $userId, string $actorId): TodoItem
     {
-        $normalizedUserId = trim($userId);
-        if ($normalizedUserId === '') {
-            throw new \InvalidArgumentException('User ID cannot be empty.');
-        }
-
-        if ($item->getOwnerId() === $normalizedUserId) {
-            throw new \InvalidArgumentException('Owner already has access to this todo item.');
-        }
+        $normalizedUserId = $this->sharedResourceAccessService->normalizeShareTarget(
+            $item,
+            $userId,
+            'Owner already has access to this todo item.',
+        );
 
         $item->addSharedUserId($normalizedUserId);
         $item->setUpdatedBy($this->actorIdResolver->resolve($actorId));
@@ -114,22 +113,12 @@ final class TodoService
 
     public function assertOwner(TodoItem $item, string $ownerId): void
     {
-        if ($item->getOwnerId() !== $ownerId) {
-            throw new AccessDeniedHttpException('You do not own this todo item.');
-        }
+        $this->sharedResourceAccessService->assertOwner($item, $ownerId, 'You do not own this todo item.');
     }
 
     public function assertAccessible(TodoItem $item, string $userId): void
     {
-        if ($item->getOwnerId() === $userId) {
-            return;
-        }
-
-        if (in_array($userId, $item->getSharedWithUserIds(), true)) {
-            return;
-        }
-
-        throw new AccessDeniedHttpException('You do not have access to this todo item.');
+        $this->sharedResourceAccessService->assertAccessible($item, $userId, 'You do not have access to this todo item.');
     }
 
     /** @return array<string, mixed> */
@@ -146,25 +135,6 @@ final class TodoService
             'createdAt' => $item->getCreatedAt()?->format('c'),
             'updatedAt' => $item->getUpdatedAt()?->format('c'),
         ];
-    }
-
-    private function parseDueDate(mixed $value): ?\DateTimeImmutable
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        $normalized = trim((string) $value);
-        if ($normalized == '') {
-            return null;
-        }
-
-        $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d', $normalized);
-        if ($parsed !== false) {
-            return $parsed;
-        }
-
-        return new \DateTimeImmutable($normalized);
     }
 
     /** @throws ValidationFailedException */

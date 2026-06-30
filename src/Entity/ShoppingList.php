@@ -15,7 +15,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: ShoppingListRepository::class)]
 #[ORM\Table(name: 'shopping_list')]
 #[ORM\HasLifecycleCallbacks]
-class ShoppingList
+class ShoppingList implements ShareableResourceInterface
 {
     use HasInstanceId;
     use TimestampableTrait;

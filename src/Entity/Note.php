@@ -13,7 +13,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: NoteRepository::class)]
 #[ORM\Table(name: 'note')]
 #[ORM\HasLifecycleCallbacks]
-class Note
+class Note implements ShareableResourceInterface
 {
     use HasInstanceId;
     use TimestampableTrait;
