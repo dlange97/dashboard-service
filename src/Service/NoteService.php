@@ -18,6 +18,7 @@ final class NoteService
         private readonly ValidatorInterface $validator,
         private readonly ActorIdResolver $actorIdResolver,
         private readonly SharedResourceAccessService $sharedResourceAccessService,
+        private readonly NotificationGateway $notificationGateway,
     ) {
     }
 
@@ -87,6 +88,12 @@ final class NoteService
         $note->addSharedUserId($normalizedUserId);
         $note->setUpdatedBy($this->actorIdResolver->resolve($actorId));
         $this->em->flush();
+        $this->notificationGateway->notifyResourceShared(
+            'note',
+            (string) $note->getTitle(),
+            $normalizedUserId,
+            $actorId,
+        );
 
         return $note;
     }

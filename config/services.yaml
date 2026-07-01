@@ -10,7 +10,6 @@ services:
       - "../src/Entity/"
       - "../src/Kernel.php"
 
-  # ── Instance ID request listener ─────────────────────────
   App\EventListener\InstanceRequestListener:
     tags:
       - {
@@ -20,15 +19,47 @@ services:
           priority: 20,
         }
 
-  # ── Instance ID Doctrine listener ────────────────────────
   App\EventListener\InstanceDoctrineListener:
     tags:
       - { name: doctrine.event_listener, event: prePersist }
 
-  # ── Rate-limit subscriber (DDoS / brute-force protection) ─
   App\EventSubscriber\RateLimitSubscriber:
     arguments:
       $apiLimiter: "@limiter.api"
       $apiSensitiveLimiter: "@limiter.api_sensitive"
     tags:
       - { name: kernel.event_subscriber }
+
+  App\Service\NotificationGateway:
+    arguments:
+      $notificationServiceUrl: "%env(string:NOTIFICATION_SERVICE_URL)%"
+      $internalNotificationToken: "%env(string:INTERNAL_NOTIFICATION_TOKEN)%"
+
+  App\Service\WishSearch\Provider\AnthropicSearchProvider:
+    arguments:
+      $apiKey: "%env(string:ANTHROPIC_API_KEY)%"
+      $apiUrl: "%env(string:ANTHROPIC_API_URL)%"
+      $model: "%env(string:ANTHROPIC_MODEL)%"
+
+  App\Service\WishSearch\Provider\BedrockSearchProvider:
+    arguments:
+      $region: "%env(string:AWS_BEDROCK_REGION)%"
+      $accessKeyId: "%env(string:AWS_BEDROCK_ACCESS_KEY_ID)%"
+      $secretAccessKey: "%env(string:AWS_BEDROCK_SECRET_ACCESS_KEY)%"
+      $sessionToken: "%env(string:AWS_BEDROCK_SESSION_TOKEN)%"
+      $model: "%env(string:AWS_BEDROCK_MODEL)%"
+
+  App\Service\WishSearch\WishSearchService:
+    arguments:
+      $topics:
+        - '@App\Service\WishSearch\Topic\RealEstateTopic'
+        - '@App\Service\WishSearch\Topic\JobOffersTopic'
+        - '@App\Service\WishSearch\Topic\WorldNewsTopic'
+      $providers:
+        - '@App\Service\WishSearch\Provider\MockSearchProvider'
+        - '@App\Service\WishSearch\Provider\AnthropicSearchProvider'
+        - '@App\Service\WishSearch\Provider\BedrockSearchProvider'
+      $defaultProvider: "%env(string:AI_PROVIDER)%"
+      $defaultModel: "%env(string:AI_MODEL)%"
+      $defaultLimit: "%env(int:AI_SEARCH_DEFAULT_LIMIT)%"
+      $maxLimit: "%env(int:AI_SEARCH_MAX_LIMIT)%"

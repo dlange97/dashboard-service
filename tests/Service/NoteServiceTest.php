@@ -8,6 +8,7 @@ use App\Entity\Note;
 use App\Repository\NoteRepository;
 use App\Service\ActorIdResolver;
 use App\Service\NoteService;
+use App\Service\NotificationGateway;
 use App\Service\SharedResourceAccessService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -39,6 +40,7 @@ final class NoteServiceTest extends TestCase
             $this->validator,
             $this->actorIdResolver,
             new SharedResourceAccessService(),
+            $this->createMock(NotificationGateway::class),
         );
     }
 
