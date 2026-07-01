@@ -5,13 +5,6 @@ declare(strict_types=1);
 namespace App\Service\WishSearch\Provider;
 
 use App\Service\WishSearch\WishSearchRequest;
-
-/**
- * Offline provider used as a safe default (AI_PROVIDER=mock).
- *
- * It never calls the network and always returns plausible, criteria-aware
- * sample rows so the whole feature works end-to-end without any API keys.
- */
 final class MockSearchProvider implements AiSearchProviderInterface
 {
     public function name(): string
@@ -35,7 +28,6 @@ final class MockSearchProvider implements AiSearchProviderInterface
                 $row[$field] = $this->sampleValue($field, $request->criteria, $i);
             }
 
-            // Ensure a stable, render-friendly shape regardless of topic.
             $row['title'] = sprintf('%s — sample result #%d', $hint, $i);
             $row['url'] = sprintf('https://example.com/%s/%d', $request->topicKey, $i);
             $row['source'] = 'mock-provider';
@@ -50,9 +42,7 @@ final class MockSearchProvider implements AiSearchProviderInterface
         return $items;
     }
 
-    /**
-     * @param array<string, mixed> $criteria
-     */
+    /** @param array<string, mixed> $criteria */
     private function primaryHint(array $criteria): string
     {
         foreach (['role', 'topic', 'location', 'category', 'propertyType'] as $key) {
@@ -65,9 +55,7 @@ final class MockSearchProvider implements AiSearchProviderInterface
         return 'Your search';
     }
 
-    /**
-     * @param array<string, mixed> $criteria
-     */
+    /** @param array<string, mixed> $criteria */
     private function sampleValue(string $field, array $criteria, int $index): string
     {
         if (isset($criteria[$field]) && is_scalar($criteria[$field]) && trim((string) $criteria[$field]) !== '') {

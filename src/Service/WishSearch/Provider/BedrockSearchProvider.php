@@ -8,13 +8,6 @@ use App\Service\WishSearch\Provider\Support\AwsSignatureV4;
 use App\Service\WishSearch\Provider\Support\JsonResultExtractor;
 use App\Service\WishSearch\WishSearchRequest;
 use Psr\Log\LoggerInterface;
-
-/**
- * AWS Bedrock provider (AI_PROVIDER=bedrock).
- *
- * Calls the Bedrock runtime InvokeModel endpoint with SigV4-signed requests,
- * using the Anthropic messages body format supported by Claude models on Bedrock.
- */
 final class BedrockSearchProvider implements AiSearchProviderInterface
 {
     public function __construct(
@@ -119,9 +112,7 @@ final class BedrockSearchProvider implements AiSearchProviderInterface
         return is_array($decoded) ? $decoded : null;
     }
 
-    /**
-     * @param array<string, mixed> $response
-     */
+    /** @param array<string, mixed> $response */
     private function collectText(array $response): string
     {
         $content = $response['content'] ?? null;

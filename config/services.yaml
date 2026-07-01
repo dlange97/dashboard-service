@@ -10,7 +10,6 @@ services:
       - "../src/Entity/"
       - "../src/Kernel.php"
 
-  # ── Instance ID request listener ─────────────────────────
   App\EventListener\InstanceRequestListener:
     tags:
       - {
@@ -20,12 +19,10 @@ services:
           priority: 20,
         }
 
-  # ── Instance ID Doctrine listener ────────────────────────
   App\EventListener\InstanceDoctrineListener:
     tags:
       - { name: doctrine.event_listener, event: prePersist }
 
-  # ── Rate-limit subscriber (DDoS / brute-force protection) ─
   App\EventSubscriber\RateLimitSubscriber:
     arguments:
       $apiLimiter: "@limiter.api"
@@ -38,7 +35,6 @@ services:
       $notificationServiceUrl: "%env(string:NOTIFICATION_SERVICE_URL)%"
       $internalNotificationToken: "%env(string:INTERNAL_NOTIFICATION_TOKEN)%"
 
-  # ── Wish Search (AI) providers — keys come from env vars ─
   App\Service\WishSearch\Provider\AnthropicSearchProvider:
     arguments:
       $apiKey: "%env(string:ANTHROPIC_API_KEY)%"
@@ -53,7 +49,6 @@ services:
       $sessionToken: "%env(string:AWS_BEDROCK_SESSION_TOKEN)%"
       $model: "%env(string:AWS_BEDROCK_MODEL)%"
 
-  # ── Wish Search orchestrator (polymorphic topics + providers) ─
   App\Service\WishSearch\WishSearchService:
     arguments:
       $topics:

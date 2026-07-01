@@ -3,13 +3,6 @@
 declare(strict_types=1);
 
 namespace App\Service\WishSearch\Provider\Support;
-
-/**
- * Best-effort extraction of a {"items":[...]} list out of an LLM text answer.
- *
- * Models sometimes wrap JSON in prose or markdown fences; this helper tries a
- * few strategies before giving up.
- */
 final class JsonResultExtractor
 {
     /**
@@ -22,7 +15,6 @@ final class JsonResultExtractor
             return [];
         }
 
-        // Strip markdown code fences if present.
         $text = (string) preg_replace('/^```(?:json)?\s*|\s*```$/m', '', $text);
 
         $candidates = [];
@@ -32,7 +24,6 @@ final class JsonResultExtractor
             $candidates[] = $direct;
         }
 
-        // Fallback: grab the first {...} or [...] block.
         if ($candidates === []) {
             $start = strcspn($text, '{[');
             if ($start < strlen($text)) {

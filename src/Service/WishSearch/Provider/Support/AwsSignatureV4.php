@@ -3,20 +3,11 @@
 declare(strict_types=1);
 
 namespace App\Service\WishSearch\Provider\Support;
-
-/**
- * Minimal AWS Signature Version 4 signer for JSON POST requests
- * (enough to call the Bedrock runtime InvokeModel endpoint).
- */
 final class AwsSignatureV4
 {
     private const ALGORITHM = 'AWS4-HMAC-SHA256';
 
-    /**
-     * Build the signed HTTP headers for a request.
-     *
-     * @return list<string> headers in "Name: value" form, ready for CURLOPT_HTTPHEADER
-     */
+    /** @return list<string> */
     public function signedHeaders(
         string $region,
         string $service,

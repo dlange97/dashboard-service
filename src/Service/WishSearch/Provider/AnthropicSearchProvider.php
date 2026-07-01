@@ -7,13 +7,6 @@ namespace App\Service\WishSearch\Provider;
 use App\Service\WishSearch\Provider\Support\JsonResultExtractor;
 use App\Service\WishSearch\WishSearchRequest;
 use Psr\Log\LoggerInterface;
-
-/**
- * Anthropic Claude provider (AI_PROVIDER=anthropic).
- *
- * Uses the Messages API with the built-in web_search tool so the model can
- * actually browse the web before returning a strict JSON result list.
- */
 final class AnthropicSearchProvider implements AiSearchProviderInterface
 {
     public function __construct(
@@ -115,11 +108,7 @@ final class AnthropicSearchProvider implements AiSearchProviderInterface
         return is_array($decoded) ? $decoded : null;
     }
 
-    /**
-     * Concatenate all text blocks from an Anthropic messages response.
-     *
-     * @param array<string, mixed> $response
-     */
+    /** @param array<string, mixed> $response */
     private function collectText(array $response): string
     {
         $content = $response['content'] ?? null;

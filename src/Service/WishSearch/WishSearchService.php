@@ -6,11 +6,6 @@ namespace App\Service\WishSearch;
 
 use App\Service\WishSearch\Provider\AiSearchProviderInterface;
 use App\Service\WishSearch\Topic\WishTopicInterface;
-
-/**
- * Orchestrates a wish search: picks the topic strategy, builds the request,
- * delegates to the configured AI provider and normalizes the results.
- */
 final class WishSearchService
 {
     /** @var array<string, WishTopicInterface> */
@@ -124,10 +119,6 @@ final class WishSearchService
         return max(1, min($this->maxLimit, $value));
     }
 
-    /**
-     * Pick the configured provider, falling back to the mock provider when the
-     * configured one is missing or not usable (e.g. no API key).
-     */
     private function resolveProvider(): AiSearchProviderInterface
     {
         $configured = $this->providers[$this->defaultProvider] ?? null;
@@ -140,7 +131,6 @@ final class WishSearchService
             return $mock;
         }
 
-        // Last resort: any configured provider.
         foreach ($this->providers as $provider) {
             if ($provider->isConfigured()) {
                 return $provider;

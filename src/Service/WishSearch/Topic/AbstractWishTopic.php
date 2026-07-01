@@ -3,22 +3,11 @@
 declare(strict_types=1);
 
 namespace App\Service\WishSearch\Topic;
-
-/**
- * Shared normalization logic for topics.
- */
 abstract class AbstractWishTopic implements WishTopicInterface
 {
-    /**
-     * Allowed result keys for this topic (whitelist applied during normalization).
-     *
-     * @return list<string>
-     */
+    /** @return list<string> */
     abstract protected function resultKeys(): array;
 
-    /**
-     * Key that must be present and non-empty for a result row to be kept.
-     */
     protected function requiredKey(): string
     {
         return 'title';
@@ -57,11 +46,7 @@ abstract class AbstractWishTopic implements WishTopicInterface
         return $normalized;
     }
 
-    /**
-     * Render a compact, human-readable summary of the active criteria for prompts.
-     *
-     * @param array<string, mixed> $criteria
-     */
+    /** @param array<string, mixed> $criteria */
     protected function describeCriteria(array $criteria): string
     {
         $parts = [];
